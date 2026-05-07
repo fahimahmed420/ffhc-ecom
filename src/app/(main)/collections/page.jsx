@@ -244,16 +244,37 @@ export default function Collections() {
                 <div className="p-4">
                   <h3 className="text-sm">{product.title}</h3>
 
-                  <div className="flex justify-between mt-2">
-                    <p>${product.price}</p>
+                  <div className="flex justify-between items-center mt-3 gap-3">
+                    {/* PRICE */}
+                    <div className="flex flex-col">
+                      {/* FINAL PRICE */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-black text-base">
+                          $
+                          {(product.discountPrice > 0
+                            ? product.discountPrice
+                            : product.price
+                          ).toFixed(2)}
+                        </p>
 
+                        {/* OLD PRICE */}
+                        {product.discountPrice > 0 && (
+                          <span className="text-sm text-gray-400 line-through">
+                            ${product.price.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* CART */}
                     <button
                       onClick={(e) => {
                         e.preventDefault();
                         addToCart(product);
                       }}
+                      className="p-2 rounded-full hover:bg-gray-100 transition"
                     >
-                      <AiOutlineShoppingCart />
+                      <AiOutlineShoppingCart className="text-lg" />
                     </button>
                   </div>
                 </div>

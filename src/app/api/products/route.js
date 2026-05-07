@@ -8,12 +8,19 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
 
+    // ===============================
+    // QUERY PARAMS
+    // ===============================
     const page = parseInt(searchParams.get("page")) || 0;
     const limit = parseInt(searchParams.get("limit")) || 12;
+
     const category = searchParams.get("category");
     const sort = searchParams.get("sort"); // asc | desc
-    const ids = searchParams.get("ids"); // 🛒 cart mode
-    const search = searchParams.get("search"); // optional future use
+    const ids = searchParams.get("ids");
+    const search = searchParams.get("search");
+
+    // NEW
+    const all = searchParams.get("all") === "true";
 
     const client = await clientPromise;
     const db = client.db("ecommerce");
@@ -37,7 +44,9 @@ export async function GET(req) {
         .filter(Boolean);
 
       const products = await collection
-        .find({ _id: { $in: idsArray } })
+        .find({
+          _id: { $in: idsArray },
+        })
         .toArray();
 
       const formatted = products.map((p) => ({
@@ -45,7 +54,9 @@ export async function GET(req) {
         _id: p._id.toString(),
       }));
 
-      return Response.json({ products: formatted });
+      return Response.json({
+        products: formatted,
+      });
     }
 
     // ===============================
@@ -53,51 +64,87 @@ export async function GET(req) {
     // ===============================
     const query = {};
 
+    // CATEGORY FILTER
     if (category && category !== "All") {
       query.category = category;
     }
 
-    // (optional future search)
+    // SEARCH
     if (search) {
-      query.title = { $regex: search, $options: "i" };
+      query.$or = [
+        {
+          title: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          category: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+      ];
     }
 
     // ===============================
     // SORTING
     // ===============================
-    let sortOption = {};
+    let sortOption = {
+      createdAt: -1,
+    };
 
-    if (sort === "asc") sortOption.price = 1;
-    if (sort === "desc") sortOption.price = -1;
+    if (sort === "asc") {
+      sortOption = { price: 1 };
+    }
+
+    if (sort === "desc") {
+      sortOption = { price: -1 };
+    }
 
     // ===============================
-    // PAGINATION QUERY
+    // BUILD QUERY
     // ===============================
-    const products = await collection
-      .find(query)
-      .sort(sortOption)
-      .skip(page * limit)
-      .limit(limit)
-      .toArray();
+    let cursor = collection.find(query).sort(sortOption);
+
+    // APPLY PAGINATION ONLY IF NOT all=true
+    if (!all) {
+      cursor = cursor.skip(page * limit).limit(limit);
+    }
+
+    const products = await cursor.toArray();
 
     const total = await collection.countDocuments(query);
 
+    // ===============================
+    // FORMAT IDS
+    // ===============================
     const formatted = products.map((p) => ({
       ...p,
       _id: p._id.toString(),
     }));
 
+    // ===============================
+    // RESPONSE
+    // ===============================
     return Response.json({
+      success: true,
       products: formatted,
       total,
-      page,
-      hasMore: page * limit + products.length < total,
+      page: all ? null : page,
+      limit: all ? null : limit,
+      hasMore: all
+        ? false
+        : page * limit + products.length < total,
     });
   } catch (err) {
     console.error("GET /products error:", err);
 
     return Response.json(
-      { error: "Failed to fetch products" },
+      {
+        success: false,
+        error: "Failed to fetch products",
+      },
       { status: 500 }
     );
   }
@@ -115,7 +162,9 @@ export async function POST(req) {
     // ===============================
     if (!body.title || !body.price) {
       return Response.json(
-        { error: "Title and price are required" },
+        {
+          error: "Title and price are required",
+        },
         { status: 400 }
       );
     }
@@ -128,16 +177,25 @@ export async function POST(req) {
     const newProduct = {
       title: body.title,
       price: Number(body.price),
+      discountPrice: Number(body.discountPrice) || 0,
       category: body.category || "General",
-      images: Array.isArray(body.images) ? body.images : [],
+
+      images: Array.isArray(body.images)
+        ? body.images
+        : [],
+
       thumbnail:
         body.thumbnail ||
-        (Array.isArray(body.images) && body.images.length > 0
+        (Array.isArray(body.images) &&
+        body.images.length > 0
           ? body.images[0]
           : ""),
-      stock: body.stock || 0,
-      rating: body.rating || 0,
+
+      stock: Number(body.stock) || 0,
+      rating: Number(body.rating) || 0,
+
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const result = await collection.insertOne(newProduct);
@@ -150,7 +208,10 @@ export async function POST(req) {
     console.error("POST /products error:", err);
 
     return Response.json(
-      { error: "Failed to create product" },
+      {
+        success: false,
+        error: "Failed to create product",
+      },
       { status: 500 }
     );
   }

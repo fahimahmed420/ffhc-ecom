@@ -6,25 +6,29 @@ import toast from "react-hot-toast";
 export default function AddProductPage() {
   const [images, setImages] = useState([""]);
   const [loading, setLoading] = useState(false);
-
-  const categoriesData = {
-    Electronics: ["Phones", "Laptops", "Accessories"],
-    Fashion: ["Men", "Women", "Kids"],
-    "Home & Living": ["Furniture", "Decor", "Kitchen"],
-    Beauty: ["Skincare", "Makeup", "Haircare"],
-    Sports: ["Fitness", "Outdoor", "Equipment"],
-    Automotive: ["Car Accessories", "Motorbike", "Tools"],
-    Gaming: ["Consoles", "Games", "Accessories"],
-    Grocery: ["Snacks", "Beverages", "Daily Essentials"],
-    Books: ["Fiction", "Non-fiction", "Educational"],
-  };
-
   const [category, setCategory] = useState("");
-  const [subCategory, setSubCategory] = useState("");
 
+  // =========================
+  // CATEGORIES
+  // =========================
+  const categories = [
+    "Glamour & Beauty",
+    "Intimate & Personal Care",
+    "Auto Parts",
+    "Fashion",
+    "Tools & Hardware",
+    "Stationery",
+    "Mother & Baby",
+    "Travel & Accessories",
+    "Home & Kitchen",
+  ];
+
+  // =========================
+  // IMAGE HANDLING
+  // =========================
   const addImageField = () => {
     if (images.length < 5) {
-      setImages([...images, ""]);
+      setImages((prev) => [...prev, ""]);
     }
   };
 
@@ -34,23 +38,31 @@ export default function AddProductPage() {
     setImages(updated);
   };
 
+  // =========================
+  // SUBMIT
+  // =========================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const formData = {
       title: e.target.title.value,
       description: e.target.description.value,
+
       price: Number(e.target.price.value),
-      discountPercentage: Number(e.target.discount.value || 0),
+      discountPrice: Number(e.target.discountPrice.value || 0),
+      stock: Number(e.target.stock.value), // ✅ STOCK ADDED
+
       brand: e.target.brand.value,
       weight: e.target.weight.value,
+
       warrantyInformation: e.target.warranty.value,
       shippingInformation: e.target.shipping.value,
       availabilityStatus: e.target.availability.value,
       returnPolicy: e.target.returnPolicy.value,
+
       category,
-      subCategory,
-      images: images.filter((img) => img !== ""),
+
+      images: images.filter((img) => img.trim() !== ""),
       createdAt: new Date(),
     };
 
@@ -59,9 +71,7 @@ export default function AddProductPage() {
 
       const res = await fetch("/api/products", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
@@ -71,13 +81,12 @@ export default function AddProductPage() {
         throw new Error(data.error || "Failed to save product");
       }
 
-      toast.success("Product added successfully ");
+      toast.success("Product added successfully 🎉");
 
-      // reset form
+      // RESET
       e.target.reset();
       setImages([""]);
       setCategory("");
-      setSubCategory("");
     } catch (err) {
       console.error(err);
       toast.error("Something went wrong ❌");
@@ -87,124 +96,138 @@ export default function AddProductPage() {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 max-w-3xl mx-auto">
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 md:p-6 max-w-3xl mx-auto">
 
-      <h2 className="text-sm tracking-widest uppercase mb-6">
-        Add Product
+      {/* HEADER */}
+      <h2 className="text-xs tracking-widest uppercase mb-6 text-gray-500">
+        Add New Product
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
 
+        {/* TITLE */}
         <input
           name="title"
           type="text"
           placeholder="Product Name"
-          className="w-full border border-gray-300 px-4 py-2 text-sm rounded-lg focus:ring-2 focus:ring-black outline-none"
+          className="w-full border border-gray-300 px-4 py-3 text-sm rounded-xl focus:ring-2 focus:ring-black outline-none"
           required
         />
 
+        {/* DESCRIPTION */}
         <textarea
           name="description"
-          placeholder="Description"
-          className="w-full border border-gray-300 px-4 py-2 text-sm rounded-lg focus:ring-2 focus:ring-black outline-none"
+          placeholder="Product Description"
+          className="w-full border border-gray-300 px-4 py-3 text-sm rounded-xl focus:ring-2 focus:ring-black outline-none"
+          rows={4}
           required
         />
 
+        {/* CATEGORY */}
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full border border-gray-300 px-4 py-3 text-sm rounded-xl focus:ring-2 focus:ring-black outline-none"
+          required
+        >
+          <option value="">Select Category</option>
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+
+        {/* PRICE + DISCOUNT */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-          <select
-            value={category}
-            onChange={(e) => {
-              setCategory(e.target.value);
-              setSubCategory("");
-            }}
-            className="border border-gray-300 px-4 py-2 text-sm rounded-lg"
-            required
-          >
-            <option value="">Select Category</option>
-            {Object.keys(categoriesData).map((cat) => (
-              <option key={cat}>{cat}</option>
-            ))}
-          </select>
-
-          <select
-            value={subCategory}
-            onChange={(e) => setSubCategory(e.target.value)}
-            className="border border-gray-300 px-4 py-2 text-sm rounded-lg"
-            disabled={!category}
-            required
-          >
-            <option value="">Select Subcategory</option>
-            {category &&
-              categoriesData[category].map((sub) => (
-                <option key={sub}>{sub}</option>
-              ))}
-          </select>
-
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <input
             name="price"
             type="number"
             placeholder="Price"
-            className="border border-gray-300 px-4 py-2 text-sm rounded-lg"
+            className="border border-gray-300 px-4 py-3 text-sm rounded-xl focus:ring-2 focus:ring-black outline-none"
             required
           />
 
           <input
-            name="discount"
+            name="discountPrice"
             type="number"
-            placeholder="Discount %"
-            className="border border-gray-300 px-4 py-2 text-sm rounded-lg"
+            placeholder="Discount Price"
+            className="border border-gray-300 px-4 py-3 text-sm rounded-xl focus:ring-2 focus:ring-black outline-none"
           />
+
         </div>
 
+        {/* STOCK */}
+        <input
+          name="stock"
+          type="number"
+          placeholder="Stock Quantity"
+          className="w-full border border-gray-300 px-4 py-3 text-sm rounded-xl focus:ring-2 focus:ring-black outline-none"
+          required
+        />
+
+        {/* BRAND + WEIGHT */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
           <input
             name="brand"
             type="text"
             placeholder="Brand"
-            className="border border-gray-300 px-4 py-2 text-sm rounded-lg"
+            className="border border-gray-300 px-4 py-3 text-sm rounded-xl"
           />
 
           <input
             name="weight"
-            type="number"
+            type="text"
             placeholder="Weight"
-            className="border border-gray-300 px-4 py-2 text-sm rounded-lg"
+            className="border border-gray-300 px-4 py-3 text-sm rounded-xl"
           />
+
         </div>
 
-        <input
-          name="warranty"
-          type="text"
-          placeholder="Warranty Information"
-          className="w-full border border-gray-300 px-4 py-2 text-sm rounded-lg"
-        />
+        {/* DROPDOWNS */}
 
-        <input
-          name="shipping"
-          type="text"
-          placeholder="Shipping Information"
-          className="w-full border border-gray-300 px-4 py-2 text-sm rounded-lg"
-        />
-
-        <input
+        {/* AVAILABILITY */}
+        <select
           name="availability"
-          type="text"
-          placeholder="Availability Status"
-          className="w-full border border-gray-300 px-4 py-2 text-sm rounded-lg"
-        />
+          className="w-full border border-gray-300 px-4 py-3 text-sm rounded-xl"
+          defaultValue="In Stock"
+        >
+          <option value="In Stock">In Stock</option>
+          <option value="Low Stock">Low Stock</option>
+          <option value="Out of Stock">Out of Stock</option>
+          <option value="Pre Order">Pre Order</option>
+        </select>
 
-        <input
+        {/* SHIPPING */}
+        <select
+          name="shipping"
+          className="w-full border border-gray-300 px-4 py-3 text-sm rounded-xl"
+          defaultValue="Standard Shipping"
+        >
+          <option value="Standard Shipping (3-5 Days)">Standard (3–5 Days)</option>
+          <option value="Express Shipping (1-2 Days)">Express (1–2 Days)</option>
+          <option value="Same Day Delivery">Same Day Delivery</option>
+          <option value="Free Shipping">Free Shipping</option>
+          <option value="Cash on Delivery Available">Cash on Delivery</option>
+        </select>
+
+        {/* RETURN POLICY */}
+        <select
           name="returnPolicy"
-          type="text"
-          placeholder="Return Policy"
-          className="w-full border border-gray-300 px-4 py-2 text-sm rounded-lg"
-        />
+          className="w-full border border-gray-300 px-4 py-3 text-sm rounded-xl"
+          defaultValue="7 Days Return"
+        >
+          <option value="No Return">No Return</option>
+          <option value="3 Days Return">3 Days Return</option>
+          <option value="7 Days Return">7 Days Return</option>
+          <option value="14 Days Return">14 Days Return</option>
+          <option value="30 Days Return">30 Days Return</option>
+          <option value="Replacement Only">Replacement Only</option>
+        </select>
 
-        {/* Images */}
+        {/* IMAGES */}
         <div className="space-y-2">
           <p className="text-xs tracking-widest uppercase text-gray-500">
             Product Images (max 5)
@@ -214,10 +237,12 @@ export default function AddProductPage() {
             <input
               key={index}
               type="text"
-              placeholder={`Image URL ${index + 1}`}
               value={img}
-              onChange={(e) => handleImageChange(index, e.target.value)}
-              className="w-full border border-gray-300 px-4 py-2 text-sm rounded-lg"
+              onChange={(e) =>
+                handleImageChange(index, e.target.value)
+              }
+              placeholder={`Image URL ${index + 1}`}
+              className="w-full border border-gray-300 px-4 py-3 text-sm rounded-xl"
             />
           ))}
 
@@ -225,21 +250,21 @@ export default function AddProductPage() {
             <button
               type="button"
               onClick={addImageField}
-              className="text-xs border px-3 py-1 tracking-widest uppercase hover:bg-black hover:text-white transition"
+              className="text-xs border px-4 py-2 rounded-xl hover:bg-black hover:text-white transition"
             >
               + Add Image
             </button>
           )}
         </div>
 
-        {/* Submit */}
+        {/* SUBMIT */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full border border-black px-6 py-2 text-sm tracking-widest uppercase hover:bg-black hover:text-white transition flex items-center justify-center gap-2"
+          className="w-full bg-black text-white px-6 py-3 text-sm tracking-widest uppercase rounded-xl hover:bg-gray-800 transition flex items-center justify-center gap-2"
         >
           {loading && (
-            <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
           )}
           {loading ? "Saving..." : "Save Product"}
         </button>

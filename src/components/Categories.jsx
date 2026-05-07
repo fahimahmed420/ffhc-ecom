@@ -24,7 +24,7 @@ export default function Categories() {
     "Travel & Accessories",
     "Home & kitchen",
   ];
-
+ 
   const images = {
     "Glamour & Beauty": "/categories/Glamour-Beauty.png",
     "Intimate & Personal Care": "/categories/intimate.png",

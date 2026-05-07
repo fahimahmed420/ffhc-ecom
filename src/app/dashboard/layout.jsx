@@ -49,8 +49,13 @@ export default function DashboardLayout({ children }) {
     ...(role === "admin"
       ? [
           {
-            name: "MANAGE PRODUCT",
+            name: "ADD PRODUCT",
             path: "/dashboard/add-product",
+            icon: <Package size={14} />,
+          },
+          {
+            name: "MANAGE PRODUCT",
+            path: "/dashboard/manage-product",
             icon: <Package size={14} />,
           },
         ]
