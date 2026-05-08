@@ -6,11 +6,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { MdLocalShipping } from "react-icons/md";
 import { GiReturnArrow } from "react-icons/gi";
-import {
-  IoMdStar,
-  IoMdStarHalf,
-  IoMdStarOutline,
-} from "react-icons/io";
+import { IoMdStar, IoMdStarHalf, IoMdStarOutline } from "react-icons/io";
 
 export default function ProductClient({ initialData }) {
   /* ================= STATE ================= */
@@ -20,6 +16,8 @@ export default function ProductClient({ initialData }) {
   const [related] = useState(initialData.related);
 
   const [quantity, setQuantity] = useState(1);
+
+  const isLowStock = product.stock > 0 && product.stock <= 5;
 
   const [mainImage, setMainImage] = useState(
     initialData.product.images?.[0] ||
@@ -31,12 +29,9 @@ export default function ProductClient({ initialData }) {
 
   const [toast, setToast] = useState(null);
 
-  const [reviews, setReviews] = useState(
-    initialData.product.reviews || [],
-  );
+  const [reviews, setReviews] = useState(initialData.product.reviews || []);
 
-  const [showReviewModal, setShowReviewModal] =
-    useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   const [newReview, setNewReview] = useState({
     name: "",
@@ -49,9 +44,7 @@ export default function ProductClient({ initialData }) {
   /* ================= INIT ================= */
 
   useEffect(() => {
-    const storedWishlist =
-      JSON.parse(localStorage.getItem("wishlist")) ||
-      [];
+    const storedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
 
     setWishlist(storedWishlist);
   }, []);
@@ -84,25 +77,19 @@ export default function ProductClient({ initialData }) {
 
   const avgRating =
     reviews.length > 0
-      ? reviews.reduce(
-          (acc, r) => acc + (r.rating || 0),
-          0,
-        ) / reviews.length
+      ? reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviews.length
       : 0;
 
   /* ================= CART ================= */
 
   const handleAddToCart = () => {
-    const cart =
-      JSON.parse(localStorage.getItem("cart")) || [];
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
 
     const id = String(product._id);
 
     const qty = Number(quantity);
 
-    const existing = cart.find(
-      (item) => item.id === id,
-    );
+    const existing = cart.find((item) => item.id === id);
 
     let updated;
 
@@ -119,10 +106,7 @@ export default function ProductClient({ initialData }) {
       updated = [...cart, { id, qty }];
     }
 
-    localStorage.setItem(
-      "cart",
-      JSON.stringify(updated),
-    );
+    localStorage.setItem("cart", JSON.stringify(updated));
 
     showToast("Added to cart 🛒");
   };
@@ -132,14 +116,10 @@ export default function ProductClient({ initialData }) {
   const toggleWishlist = () => {
     let updated;
 
-    const isWishlisted = wishlist.find(
-      (item) => item._id === product._id,
-    );
+    const isWishlisted = wishlist.find((item) => item._id === product._id);
 
     if (isWishlisted) {
-      updated = wishlist.filter(
-        (item) => item._id !== product._id,
-      );
+      updated = wishlist.filter((item) => item._id !== product._id);
 
       showToast("Removed from wishlist");
     } else {
@@ -150,10 +130,7 @@ export default function ProductClient({ initialData }) {
 
     setWishlist([...updated]);
 
-    localStorage.setItem(
-      "wishlist",
-      JSON.stringify(updated),
-    );
+    localStorage.setItem("wishlist", JSON.stringify(updated));
   };
 
   /* ================= REVIEW ================= */
@@ -178,23 +155,18 @@ export default function ProductClient({ initialData }) {
         email: "",
       };
 
-      const res = await fetch(
-        `/api/products/${product._id}/review`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(reviewPayload),
+      const res = await fetch(`/api/products/${product._id}/review`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify(reviewPayload),
+      });
 
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        showToast(
-          data.error || "Failed to submit review",
-        );
+        showToast(data.error || "Failed to submit review");
 
         return;
       }
@@ -220,31 +192,21 @@ export default function ProductClient({ initialData }) {
   /* ================= DERIVED ================= */
 
   if (!product) {
-    return (
-      <p className="text-center mt-20 text-gray-500">
-        Product not found
-      </p>
-    );
+    return <p className="text-center mt-20 text-gray-500">Product not found</p>;
   }
 
   const finalPrice =
-    product.discountPrice > 0
-      ? product.discountPrice
-      : product.price;
+    product.discountPrice > 0 ? product.discountPrice : product.price;
 
   const inStock =
-    product.availabilityStatus === "In Stock" ||
-    product.stock > 0;
+    product.availabilityStatus === "In Stock" || product.stock > 0;
 
-  const isWishlisted = wishlist.find(
-    (item) => item._id === product._id,
-  );
+  const isWishlisted = wishlist.find((item) => item._id === product._id);
 
   /* ================= UI ================= */
 
   return (
     <section className="max-w-7xl mx-auto px-6 md:px-12 py-20">
-
       {/* TOAST */}
       {toast && (
         <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] bg-black text-white px-6 py-3 rounded-full shadow-2xl">
@@ -255,22 +217,14 @@ export default function ProductClient({ initialData }) {
       {/* BREADCRUMB */}
       <div className="text-sm text-gray-500 mb-6">
         <Link href="/">Home</Link> &gt;{" "}
-        <Link href="/collections">
-          Collections
-        </Link>{" "}
-        &gt;{" "}
-        <span className="text-black">
-          {product.title}
-        </span>
+        <Link href="/collections">Collections</Link> &gt;{" "}
+        <span className="text-black">{product.title}</span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-12">
-
         {/* IMAGES */}
         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-
           <div className="relative h-[450px] w-full mb-4 rounded-lg overflow-hidden border border-gray-100">
-
             <Image
               src={mainImage}
               alt={product.title}
@@ -282,7 +236,6 @@ export default function ProductClient({ initialData }) {
           </div>
 
           <div className="grid grid-cols-4 gap-3">
-
             {product.images?.map((img, i) => (
               <div
                 key={i}
@@ -307,7 +260,6 @@ export default function ProductClient({ initialData }) {
 
         {/* INFO */}
         <div className="md:sticky md:top-24 h-fit">
-
           {/* DISCOUNT */}
           {product.discountPrice > 0 && (
             <p className="text-red-600 mb-2 font-bold uppercase text-xs tracking-widest">
@@ -321,20 +273,17 @@ export default function ProductClient({ initialData }) {
 
           {/* RATING */}
           <div className="flex items-center gap-3 mb-4">
-
             <span className="text-yellow-500 flex text-lg">
               {renderStars(avgRating)}
             </span>
 
             <span className="text-sm text-gray-500 font-medium">
-              {avgRating.toFixed(1)} (
-              {reviews.length} reviews)
+              {avgRating.toFixed(1)} ({reviews.length} reviews)
             </span>
           </div>
 
           {/* PRICE */}
           <div className="flex items-center gap-4 mb-6 flex-wrap">
-
             <span className="text-3xl font-bold text-black">
               ${finalPrice.toFixed(2)}
             </span>
@@ -347,11 +296,7 @@ export default function ProductClient({ initialData }) {
 
             {product.discountPrice > 0 && (
               <span className="bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full">
-                SAVE $
-                {(
-                  product.price -
-                  product.discountPrice
-                ).toFixed(2)}
+                SAVE ${(product.price - product.discountPrice).toFixed(2)}
               </span>
             )}
           </div>
@@ -363,19 +308,14 @@ export default function ProductClient({ initialData }) {
 
           {/* STOCK */}
           <div className="flex items-center gap-3 mb-8 flex-wrap">
-
             <span
               className={`w-3 h-3 rounded-full ${
-                inStock
-                  ? "bg-green-500"
-                  : "bg-red-500"
+                inStock ? "bg-green-500" : "bg-red-500"
               }`}
             />
 
             <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              {inStock
-                ? "In Stock"
-                : "Out of Stock"}
+              {inStock ? "In Stock" : "Out of Stock"}
             </p>
 
             {inStock && (
@@ -383,23 +323,23 @@ export default function ProductClient({ initialData }) {
                 ({product.stock || 0} available)
               </span>
             )}
+
+            {/* 🔥 LOW STOCK BADGE */}
+            {isLowStock && (
+              <span className="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full font-semibold">
+                ⚠️ Low Stock
+              </span>
+            )}
           </div>
 
           {/* ACTIONS */}
           <div className="flex flex-col gap-4 mb-8">
-
             <div className="flex items-center gap-4">
-
               {/* QUANTITY */}
               <div className="flex items-center border border-gray-300 rounded-lg shadow-sm">
-
                 <button
                   type="button"
-                  onClick={() =>
-                    setQuantity((q) =>
-                      Math.max(1, q - 1),
-                    )
-                  }
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   className="px-5 py-3 hover:bg-gray-50 transition"
                 >
                   −
@@ -411,9 +351,7 @@ export default function ProductClient({ initialData }) {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setQuantity((q) => q + 1)
-                  }
+                  onClick={() => setQuantity((q) => q + 1)}
                   className="px-5 py-3 hover:bg-gray-50 transition"
                 >
                   +
@@ -423,8 +361,13 @@ export default function ProductClient({ initialData }) {
               {/* ADD TO CART */}
               <button
                 onClick={handleAddToCart}
-                disabled={!inStock}
-                className="flex-1 bg-black text-white py-4 rounded-lg font-bold hover:bg-gray-800 transition disabled:bg-gray-300"
+                disabled={!inStock || product.stock <= 0}
+                className={`flex-1 py-4 rounded-lg font-bold transition
+                  ${
+                    !inStock || product.stock <= 0
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-black hover:bg-gray-800 text-white"
+                  }`}
               >
                 ADD TO CART
               </button>
@@ -435,47 +378,36 @@ export default function ProductClient({ initialData }) {
               onClick={toggleWishlist}
               className="w-full py-4 border border-gray-300 rounded-lg font-semibold hover:bg-black hover:text-white transition flex justify-center items-center gap-2"
             >
-              {isWishlisted
-                ? "❤️ SAVED TO WISHLIST"
-                : "♡ SAVE TO WISHLIST"}
+              {isWishlisted ? "❤️ SAVED TO WISHLIST" : "♡ SAVE TO WISHLIST"}
             </button>
           </div>
 
           {/* SHIPPING */}
           <div className="grid grid-cols-2 gap-4">
-
             <div className="border border-gray-100 p-5 bg-gray-50/50 rounded-xl flex flex-col items-center text-center">
-
               <MdLocalShipping className="text-3xl mb-2 text-gray-700" />
 
-              <p className="font-bold text-xs uppercase mb-1">
-                Shipping
-              </p>
+              <p className="font-bold text-xs uppercase mb-1">Shipping</p>
 
               <p className="text-xs text-gray-500">
-                {product.shippingInformation ||
-                  "Free standard shipping"}
+                {product.shippingInformation || "Free standard shipping"}
               </p>
             </div>
 
             {/* RETURNS */}
             <div className="border border-gray-100 p-5 bg-gray-50/50 rounded-xl flex flex-col items-center text-center">
-
               <GiReturnArrow className="text-3xl mb-2 text-gray-700" />
 
-              <p className="font-bold text-xs uppercase mb-1">
-                Returns
-              </p>
+              <p className="font-bold text-xs uppercase mb-1">Returns</p>
 
               <p className="text-xs text-gray-500">
-                {product.returnPolicy ||
-                  "30-day return policy"}
+                {product.returnPolicy || "30-day return policy"}
               </p>
             </div>
           </div>
         </div>
       </div>
-        {/* Reviews Section */}
+      {/* Reviews Section */}
       <div className="mt-32 border-t border-gray-100 pt-20">
         <div className="flex justify-between items-end mb-10">
           <div>

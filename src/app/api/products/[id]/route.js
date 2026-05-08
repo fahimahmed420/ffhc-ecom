@@ -7,8 +7,6 @@ export async function GET(req, context) {
     const { params } = context;
     const { id } = await params;
 
-    console.log("👉 GET product:", id);
-
     if (!ObjectId.isValid(id)) {
       return Response.json(
         { error: "Invalid product id" },
@@ -49,7 +47,6 @@ export async function GET(req, context) {
       })),
     });
   } catch (err) {
-    console.error("GET error:", err);
     return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -60,13 +57,9 @@ export async function PUT(req, context) {
     const { params } = context;
     const { id } = await params;
 
-    console.log("👉 PUT request received:", id);
-
     const body = await req.json();
-    console.log("📦 Body:", body);
 
     if (!ObjectId.isValid(id)) {
-      console.log("❌ Invalid ID:", id);
       return Response.json(
         { error: "Invalid product id" },
         { status: 400 }
@@ -87,8 +80,6 @@ export async function PUT(req, context) {
       }
     );
 
-    console.log("📊 Mongo result:", result);
-
     if (result.matchedCount === 0) {
       return Response.json(
         { error: "Product not found" },
@@ -101,7 +92,6 @@ export async function PUT(req, context) {
       message: "Product updated successfully",
     });
   } catch (err) {
-    console.error("PUT error:", err);
     return Response.json(
       { error: "Update failed" },
       { status: 500 }
@@ -114,8 +104,6 @@ export async function DELETE(req, context) {
   try {
     const { params } = context;
     const { id } = await params;
-
-    console.log("🗑 DELETE request:", id);
 
     if (!ObjectId.isValid(id)) {
       return Response.json(
@@ -130,8 +118,6 @@ export async function DELETE(req, context) {
       _id: new ObjectId(id),
     });
 
-    console.log("📊 Delete result:", result);
-
     if (result.deletedCount === 0) {
       return Response.json(
         { error: "Product not found" },
@@ -144,7 +130,6 @@ export async function DELETE(req, context) {
       message: "Product deleted",
     });
   } catch (err) {
-    console.error("DELETE error:", err);
     return Response.json(
       { error: "Delete failed" },
       { status: 500 }

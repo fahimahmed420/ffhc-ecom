@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function CheckoutPage() {
   const [cart, setCart] = useState([]);
@@ -12,95 +14,190 @@ export default function CheckoutPage() {
   const [unions, setUnions] = useState([]);
 
   const [loading, setLoading] = useState(false);
+  const [productLoading, setProductLoading] =
+    useState(true);
 
   const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
+
     divisionId: "",
     divisionName: "",
+
     districtId: "",
     districtName: "",
+
     upazilaId: "",
     upazilaName: "",
+
     unionId: "",
     unionName: "",
+
     address: "",
   });
 
-  // ================= CART =================
+  // ================= LOAD CART =================
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("cart")) || [];
-    setCart(stored);
+    try {
+      const stored =
+        JSON.parse(localStorage.getItem("cart")) ||
+        [];
+
+      // FIX INVALID ITEMS
+      const normalized = stored.filter((item) => {
+        if (typeof item === "string") return true;
+
+        return item?.id;
+      });
+
+      setCart(normalized);
+    } catch (err) {
+      console.error(err);
+      setCart([]);
+    }
   }, []);
 
+  // ================= FETCH PRODUCTS =================
   useEffect(() => {
-    if (!cart.length) return;
+    if (!cart.length) {
+      setProductLoading(false);
+      return;
+    }
 
-    const ids = cart.map((i) => (typeof i === "string" ? i : i.id));
+    const fetchProducts = async () => {
+      try {
+        setProductLoading(true);
 
-    fetch(`/api/products?ids=${ids.join(",")}`)
-      .then((res) => res.json())
-      .then((data) => setProducts(data.products || []));
+        // REMOVE INVALID IDS
+        const ids = cart
+          .map((item) =>
+            typeof item === "string"
+              ? item
+              : item.id,
+          )
+          .filter(Boolean);
+
+        const res = await fetch(
+          `/api/products?ids=${ids.join(",")}`,
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(
+            data?.error ||
+              "Failed to fetch products",
+          );
+        }
+
+        setProducts(data.products || []);
+      } catch (err) {
+        console.error(err);
+
+        toast.error(
+          "Some cart products could not be loaded",
+        );
+      } finally {
+        setProductLoading(false);
+      }
+    };
+
+    fetchProducts();
   }, [cart]);
 
-  // ================= BD API =================
+  // ================= DIVISIONS =================
   useEffect(() => {
     fetch("https://bdapi.vercel.app/api/v.1/division")
       .then((res) => res.json())
-      .then((data) => setDivisions(data.data || []));
+      .then((data) =>
+        setDivisions(data.data || []),
+      );
   }, []);
 
+  // ================= DISTRICTS =================
   useEffect(() => {
     if (!form.divisionId) return;
 
-    fetch(`https://bdapi.vercel.app/api/v.1/district/${form.divisionId}`)
+    fetch(
+      `https://bdapi.vercel.app/api/v.1/district/${form.divisionId}`,
+    )
       .then((res) => res.json())
-      .then((data) => setDistricts(data.data || []));
+      .then((data) =>
+        setDistricts(data.data || []),
+      );
   }, [form.divisionId]);
 
+  // ================= UPAZILAS =================
   useEffect(() => {
     if (!form.districtId) return;
 
-    fetch(`https://bdapi.vercel.app/api/v.1/upazilla/${form.districtId}`)
+    fetch(
+      `https://bdapi.vercel.app/api/v.1/upazilla/${form.districtId}`,
+    )
       .then((res) => res.json())
-      .then((data) => setUpazilas(data.data || []));
+      .then((data) =>
+        setUpazilas(data.data || []),
+      );
   }, [form.districtId]);
 
+  // ================= UNIONS =================
   useEffect(() => {
     if (!form.upazilaId) return;
 
-    fetch(`https://bdapi.vercel.app/api/v.1/union/${form.upazilaId}`)
+    fetch(
+      `https://bdapi.vercel.app/api/v.1/union/${form.upazilaId}`,
+    )
       .then((res) => res.json())
-      .then((data) => setUnions(data.data || []));
+      .then((data) =>
+        setUnions(data.data || []),
+      );
   }, [form.upazilaId]);
 
   // ================= CART HELPERS =================
   const getQty = (id) => {
     const item = cart.find((c) =>
-      typeof c === "string" ? c === id : c.id === id
+      typeof c === "string"
+        ? c === id
+        : c.id === id,
     );
-    return typeof item === "string" ? 1 : item?.qty || 1;
+
+    return typeof item === "string"
+      ? 1
+      : item?.qty || 1;
   };
 
-  const merged = products.map((p) => {
-    const qty = getQty(p._id);
+  // ================= MERGED PRODUCTS =================
+  const merged = useMemo(() => {
+    return products.map((p) => {
+      const qty = getQty(p._id);
 
-    const discountedPrice = p.discountPercentage
-      ? (p.price * (100 - p.discountPercentage)) / 100
-      : p.price;
+      const discountedPrice =
+        p.discountPrice > 0
+          ? p.discountPrice
+          : p.price;
 
-    return { ...p, qty, discountedPrice };
-  });
+      return {
+        ...p,
+        qty,
+        discountedPrice,
+      };
+    });
+  }, [products, cart]);
 
+  // ================= TOTALS =================
   const subtotal = merged.reduce(
-    (acc, i) => acc + i.discountedPrice * i.qty,
-    0
+    (acc, item) =>
+      acc +
+      item.discountedPrice * item.qty,
+    0,
   );
 
-  // ================= SHIPPING =================
+  // SHIPPING
   const isDhaka =
-    form.districtName?.toLowerCase().includes("dhaka");
+    form.districtName
+      ?.toLowerCase()
+      .includes("dhaka");
 
   const shipping = form.districtId
     ? isDhaka
@@ -110,44 +207,58 @@ export default function CheckoutPage() {
 
   const total = subtotal + shipping;
 
-  // ================= ORDER =================
+  // ================= PLACE ORDER =================
   const handleOrder = async () => {
-    setLoading(true);
-
-    const order = {
-      items: merged,
-      customer: form,
-      subtotal,
-      shipping,
-      total,
-      paymentMethod: "COD",
-    };
-
     try {
+      setLoading(true);
+
+      const order = {
+        items: merged,
+        customer: form,
+        subtotal,
+        shipping,
+        total,
+        paymentMethod: "COD",
+      };
+
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type":
+            "application/json",
         },
         body: JSON.stringify(order),
       });
 
       const data = await res.json();
 
-      if (data?.success) {
-        alert("Order placed successfully! Invoice sent to email 📧");
-        localStorage.removeItem("cart");
-        window.location.href = "/";
-      } else {
-        alert(data?.message || "Order failed");
+      if (!res.ok || !data.success) {
+        toast.error(
+          data?.message || "Order failed",
+        );
+
+        return;
       }
+
+      toast.success(
+        "Order placed successfully 🎉",
+      );
+
+      localStorage.removeItem("cart");
+
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
     } catch (err) {
-      alert("Server error");
+      console.error(err);
+
+      toast.error("Server error");
     } finally {
       setLoading(false);
     }
   };
 
+  // ================= VALIDATION =================
   const isValid =
     form.name &&
     form.email &&
@@ -157,208 +268,359 @@ export default function CheckoutPage() {
     form.upazilaId &&
     form.address;
 
+  // ================= LOADING =================
+  if (productLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Loading checkout...
+      </div>
+    );
+  }
+
   // ================= UI =================
   return (
-    <section className="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-10">
+    <>
+      <Toaster position="top-right" />
 
-      {/* LEFT FORM */}
-      <div className="bg-white p-8 rounded-2xl shadow space-y-6">
-        <h2 className="text-2xl font-semibold">
-          Delivery Information
-        </h2>
+      <section className="max-w-7xl mx-auto px-4 md:px-8 py-14 grid lg:grid-cols-2 gap-10">
 
-        {/* BASIC INFO */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <input
-            placeholder="Full Name"
-            className="input"
-            onChange={(e) =>
-              setForm({ ...form, name: e.target.value })
-            }
-          />
+        {/* LEFT */}
+        <div className="bg-white border border-gray-200 rounded-3xl p-6 md:p-8 shadow-sm">
 
-          <input
-            placeholder="Email"
-            className="input"
-            onChange={(e) =>
-              setForm({ ...form, email: e.target.value })
-            }
-          />
+          <h2 className="text-3xl font-bold mb-8">
+            Delivery Information
+          </h2>
 
-          <input
-            placeholder="Phone"
-            className="input"
-            onChange={(e) =>
-              setForm({ ...form, phone: e.target.value })
-            }
-          />
-        </div>
+          {/* BASIC INFO */}
+          <div className="grid md:grid-cols-2 gap-5 mb-5">
 
-        {/* DIVISION */}
-        <select
-          className="input"
-          onChange={(e) => {
-            const selected = divisions.find(
-              (d) => d.id === e.target.value
-            );
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={form.name}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  name: e.target.value,
+                })
+              }
+              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black"
+            />
 
-            setForm({
-              ...form,
-              divisionId: selected?.id || "",
-              divisionName: selected?.name || "",
-              districtId: "",
-              upazilaId: "",
-              unionId: "",
-            });
-
-            setDistricts([]);
-            setUpazilas([]);
-            setUnions([]);
-          }}
-        >
-          <option value="">Select Division</option>
-          {divisions.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-
-        {/* DISTRICT */}
-        <select
-          className="input"
-          disabled={!districts.length}
-          onChange={(e) => {
-            const selected = districts.find(
-              (d) => d.id === e.target.value
-            );
-
-            setForm({
-              ...form,
-              districtId: selected?.id || "",
-              districtName: selected?.name || "",
-              upazilaId: "",
-              unionId: "",
-            });
-
-            setUpazilas([]);
-            setUnions([]);
-          }}
-        >
-          <option value="">Select District</option>
-          {districts.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-
-        {/* UPAZILA */}
-        <select
-          className="input"
-          disabled={!upazilas.length}
-          onChange={(e) => {
-            const selected = upazilas.find(
-              (u) => u.id === e.target.value
-            );
-
-            setForm({
-              ...form,
-              upazilaId: selected?.id || "",
-              upazilaName: selected?.name || "",
-              unionId: "",
-            });
-
-            setUnions([]);
-          }}
-        >
-          <option value="">Select Upazila</option>
-          {upazilas.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.name}
-            </option>
-          ))}
-        </select>
-
-        {/* UNION */}
-        <select
-          className="input"
-          disabled={!unions.length}
-          onChange={(e) => {
-            const selected = unions.find(
-              (u) => u.id === e.target.value
-            );
-
-            setForm({
-              ...form,
-              unionId: selected?.id || "",
-              unionName: selected?.name || "",
-            });
-          }}
-        >
-          <option value="">Select Union</option>
-          {unions.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.name}
-            </option>
-          ))}
-        </select>
-
-        <textarea
-          placeholder="Full Address"
-          className="input"
-          onChange={(e) =>
-            setForm({ ...form, address: e.target.value })
-          }
-        />
-
-        {/* PAYMENT INFO */}
-        <div className="p-4 bg-yellow-50 border rounded-xl text-sm">
-          💳 Online payment is currently unavailable.  
-          Only <b>Cash on Delivery</b> is supported.
-        </div>
-      </div>
-
-      {/* RIGHT SUMMARY */}
-      <div className="bg-white p-6 rounded-2xl shadow space-y-4">
-        <h2 className="text-xl font-semibold">Order Summary</h2>
-
-        {merged.map((item) => (
-          <div key={item._id} className="flex justify-between text-sm">
-            <span>
-              {item.title} × {item.qty}
-            </span>
-            <span>
-              ৳{(item.qty * item.discountedPrice).toFixed(0)}
-            </span>
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={form.email}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  email: e.target.value,
+                })
+              }
+              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black"
+            />
           </div>
-        ))}
 
-        <hr />
+          {/* PHONE */}
+          <div className="mb-5">
+            <input
+              type="text"
+              placeholder="Phone Number"
+              value={form.phone}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  phone: e.target.value,
+                })
+              }
+              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black"
+            />
+          </div>
 
-        <div className="flex justify-between">
-          <span>Subtotal</span>
-          <span>৳{subtotal.toFixed(0)}</span>
+          {/* ADDRESS SELECTS */}
+          <div className="space-y-5">
+
+            {/* DIVISION */}
+            <select
+              value={form.divisionId}
+              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black"
+              onChange={(e) => {
+                const selected =
+                  divisions.find(
+                    (d) =>
+                      d.id === e.target.value,
+                  );
+
+                setForm({
+                  ...form,
+                  divisionId:
+                    selected?.id || "",
+                  divisionName:
+                    selected?.name || "",
+
+                  districtId: "",
+                  districtName: "",
+
+                  upazilaId: "",
+                  upazilaName: "",
+
+                  unionId: "",
+                  unionName: "",
+                });
+
+                setDistricts([]);
+                setUpazilas([]);
+                setUnions([]);
+              }}
+            >
+              <option value="">
+                Select Division
+              </option>
+
+              {divisions.map((d) => (
+                <option
+                  key={d.id}
+                  value={d.id}
+                >
+                  {d.name}
+                </option>
+              ))}
+            </select>
+
+            {/* DISTRICT */}
+            <select
+              value={form.districtId}
+              disabled={!districts.length}
+              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100"
+              onChange={(e) => {
+                const selected =
+                  districts.find(
+                    (d) =>
+                      d.id === e.target.value,
+                  );
+
+                setForm({
+                  ...form,
+                  districtId:
+                    selected?.id || "",
+                  districtName:
+                    selected?.name || "",
+
+                  upazilaId: "",
+                  upazilaName: "",
+
+                  unionId: "",
+                  unionName: "",
+                });
+
+                setUpazilas([]);
+                setUnions([]);
+              }}
+            >
+              <option value="">
+                Select District
+              </option>
+
+              {districts.map((d) => (
+                <option
+                  key={d.id}
+                  value={d.id}
+                >
+                  {d.name}
+                </option>
+              ))}
+            </select>
+
+            {/* UPAZILA */}
+            <select
+              value={form.upazilaId}
+              disabled={!upazilas.length}
+              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100"
+              onChange={(e) => {
+                const selected =
+                  upazilas.find(
+                    (u) =>
+                      u.id === e.target.value,
+                  );
+
+                setForm({
+                  ...form,
+                  upazilaId:
+                    selected?.id || "",
+                  upazilaName:
+                    selected?.name || "",
+
+                  unionId: "",
+                  unionName: "",
+                });
+
+                setUnions([]);
+              }}
+            >
+              <option value="">
+                Select Upazila
+              </option>
+
+              {upazilas.map((u) => (
+                <option
+                  key={u.id}
+                  value={u.id}
+                >
+                  {u.name}
+                </option>
+              ))}
+            </select>
+
+            {/* UNION */}
+            <select
+              value={form.unionId}
+              disabled={!unions.length}
+              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100"
+              onChange={(e) => {
+                const selected =
+                  unions.find(
+                    (u) =>
+                      u.id === e.target.value,
+                  );
+
+                setForm({
+                  ...form,
+                  unionId:
+                    selected?.id || "",
+                  unionName:
+                    selected?.name || "",
+                });
+              }}
+            >
+              <option value="">
+                Select Union
+              </option>
+
+              {unions.map((u) => (
+                <option
+                  key={u.id}
+                  value={u.id}
+                >
+                  {u.name}
+                </option>
+              ))}
+            </select>
+
+            {/* ADDRESS */}
+            <textarea
+              rows={5}
+              placeholder="House / Road / Area / Full Address"
+              value={form.address}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  address: e.target.value,
+                })
+              }
+              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black resize-none"
+            />
+          </div>
+
+          {/* COD INFO */}
+          <div className="mt-6 p-5 rounded-2xl border border-yellow-200 bg-yellow-50 text-sm text-yellow-900">
+            💳 Online payment is currently
+            unavailable. Only{" "}
+            <span className="font-bold">
+              Cash on Delivery
+            </span>{" "}
+            is supported.
+          </div>
         </div>
 
-        <div className="flex justify-between">
-          <span>Shipping</span>
-          <span>৳{shipping}</span>
-        </div>
+        {/* RIGHT */}
+        <div className="bg-white border border-gray-200 rounded-3xl p-6 shadow-sm h-fit sticky top-24">
 
-        <div className="flex justify-between font-bold text-lg">
-          <span>Total</span>
-          <span>৳{total.toFixed(0)}</span>
-        </div>
+          <h2 className="text-2xl font-bold mb-6">
+            Order Summary
+          </h2>
 
-        <button
-          disabled={!isValid || loading}
-          onClick={handleOrder}
-          className="w-full bg-black text-white py-3 rounded-xl disabled:bg-gray-300"
-        >
-          {loading ? "Placing Order..." : "Place Order (COD)"}
-        </button>
-      </div>
-    </section>
+          {/* PRODUCTS */}
+          <div className="space-y-5 max-h-[450px] overflow-y-auto pr-2">
+
+            {merged.map((item) => (
+              <div
+                key={item._id}
+                className="flex gap-4"
+              >
+
+                <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-gray-200 bg-white">
+                  <Image
+                    src={
+                      item.images?.[0] ||
+                      item.thumbnail ||
+                      "/fallback.png"
+                    }
+                    alt={item.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+
+                <div className="flex-1">
+
+                  <h3 className="font-semibold line-clamp-2">
+                    {item.title}
+                  </h3>
+
+                  <p className="text-sm text-gray-500 mt-1">
+                    Qty: {item.qty}
+                  </p>
+
+                  <p className="font-bold mt-2">
+                    ৳
+                    {(
+                      item.discountedPrice *
+                      item.qty
+                    ).toFixed(0)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* TOTALS */}
+          <div className="mt-8 space-y-4 border-t pt-6">
+
+            <div className="flex justify-between text-gray-600">
+              <span>Subtotal</span>
+
+              <span>
+                ৳{subtotal.toFixed(0)}
+              </span>
+            </div>
+
+            <div className="flex justify-between text-gray-600">
+              <span>Shipping</span>
+
+              <span>৳{shipping}</span>
+            </div>
+
+            <div className="flex justify-between text-2xl font-black border-t pt-4">
+              <span>Total</span>
+
+              <span>
+                ৳{total.toFixed(0)}
+              </span>
+            </div>
+          </div>
+
+          {/* BUTTON */}
+          <button
+            disabled={!isValid || loading}
+            onClick={handleOrder}
+            className="w-full mt-8 bg-black text-white py-4 rounded-2xl font-semibold hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {loading
+              ? "Placing Order..."
+              : "Place Order (COD)"}
+          </button>
+        </div>
+      </section>
+    </>
   );
 }

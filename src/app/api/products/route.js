@@ -8,40 +8,38 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
 
-    // ===============================
-    // QUERY PARAMS
-    // ===============================
-    const page = parseInt(searchParams.get("page")) || 0;
-    const limit = parseInt(searchParams.get("limit")) || 12;
+    const page = Number(searchParams.get("page")) || 0;
+    const limit = Number(searchParams.get("limit")) || 12;
 
     const category = searchParams.get("category");
-    const sort = searchParams.get("sort"); // asc | desc
+    const sort = searchParams.get("sort");
     const ids = searchParams.get("ids");
     const search = searchParams.get("search");
-
-    // NEW
     const all = searchParams.get("all") === "true";
 
     const client = await clientPromise;
+
     const db = client.db("ecommerce");
 
     const collection = db.collection("products");
 
-    // ===============================
-    // 🛒 CART MODE (FETCH BY IDS)
-    // ===============================
+    // =========================================
+    // FETCH PRODUCTS BY IDS
+    // =========================================
     if (ids) {
       const idsArray = ids
         .split(",")
-        .filter(Boolean)
-        .map((id) => {
-          try {
-            return new ObjectId(id);
-          } catch {
-            return null;
-          }
-        })
-        .filter(Boolean);
+        .map((id) => id.trim())
+        .filter((id) => ObjectId.isValid(id))
+        .map((id) => new ObjectId(id));
+
+      // prevent empty query
+      if (!idsArray.length) {
+        return Response.json({
+          success: true,
+          products: [],
+        });
+      }
 
       const products = await collection
         .find({
@@ -55,16 +53,17 @@ export async function GET(req) {
       }));
 
       return Response.json({
+        success: true,
         products: formatted,
       });
     }
 
-    // ===============================
-    // FILTER QUERY
-    // ===============================
+    // =========================================
+    // QUERY
+    // =========================================
     const query = {};
 
-    // CATEGORY FILTER
+    // CATEGORY
     if (category && category !== "All") {
       query.category = category;
     }
@@ -87,9 +86,9 @@ export async function GET(req) {
       ];
     }
 
-    // ===============================
+    // =========================================
     // SORTING
-    // ===============================
+    // =========================================
     let sortOption = {
       createdAt: -1,
     };
@@ -102,12 +101,12 @@ export async function GET(req) {
       sortOption = { price: -1 };
     }
 
-    // ===============================
-    // BUILD QUERY
-    // ===============================
+    // =========================================
+    // CURSOR
+    // =========================================
     let cursor = collection.find(query).sort(sortOption);
 
-    // APPLY PAGINATION ONLY IF NOT all=true
+    // pagination
     if (!all) {
       cursor = cursor.skip(page * limit).limit(limit);
     }
@@ -116,17 +115,14 @@ export async function GET(req) {
 
     const total = await collection.countDocuments(query);
 
-    // ===============================
-    // FORMAT IDS
-    // ===============================
+    // =========================================
+    // FORMAT
+    // =========================================
     const formatted = products.map((p) => ({
       ...p,
       _id: p._id.toString(),
     }));
 
-    // ===============================
-    // RESPONSE
-    // ===============================
     return Response.json({
       success: true,
       products: formatted,
@@ -157,12 +153,10 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    // ===============================
-    // VALIDATION
-    // ===============================
     if (!body.title || !body.price) {
       return Response.json(
         {
+          success: false,
           error: "Title and price are required",
         },
         { status: 400 }
@@ -170,15 +164,22 @@ export async function POST(req) {
     }
 
     const client = await clientPromise;
+
     const db = client.db("ecommerce");
 
     const collection = db.collection("products");
 
     const newProduct = {
       title: body.title,
+      description: body.description || "",
+      category: body.category || "General",
+
       price: Number(body.price),
       discountPrice: Number(body.discountPrice) || 0,
-      category: body.category || "General",
+
+      stock: Number(body.stock) || 0,
+
+      rating: Number(body.rating) || 0,
 
       images: Array.isArray(body.images)
         ? body.images
@@ -186,13 +187,15 @@ export async function POST(req) {
 
       thumbnail:
         body.thumbnail ||
-        (Array.isArray(body.images) &&
-        body.images.length > 0
-          ? body.images[0]
-          : ""),
+        body.images?.[0] ||
+        "",
 
-      stock: Number(body.stock) || 0,
-      rating: Number(body.rating) || 0,
+      availabilityStatus:
+        Number(body.stock) > 0
+          ? "In Stock"
+          : "Out of Stock",
+
+      reviews: [],
 
       createdAt: new Date(),
       updatedAt: new Date(),
