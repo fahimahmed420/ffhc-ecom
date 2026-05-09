@@ -18,7 +18,6 @@ function BestSellingSkeleton() {
             <div className="p-6 space-y-3">
               <div className="h-4 w-3/4 bg-gray-200 rounded" />
               <div className="h-4 w-1/3 bg-gray-200 rounded" />
-              <div className="h-8 w-full bg-gray-200 rounded mt-6" />
             </div>
           </div>
         ))}
@@ -33,7 +32,6 @@ export default function BestSelling() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  /* ⭐ SAME LOGIC AS ProductClient */
   const calculateAvg = (reviews = []) => {
     if (!reviews.length) return 0;
     return (
@@ -42,7 +40,6 @@ export default function BestSelling() {
     );
   };
 
-  /* ⭐ Star renderer */
   const renderStars = (rating = 0) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -53,9 +50,8 @@ export default function BestSelling() {
     return stars;
   };
 
-  /* 🔄 Load BEST RATED products */
   useEffect(() => {
-   fetch("/api/products/best-selling")
+    fetch("/api/products/best-selling")
       .then((res) => res.json())
       .then((data) => {
         setProducts(data.products || []);
@@ -77,7 +73,6 @@ export default function BestSelling() {
 
       <div className="grid md:grid-cols-4 grid-cols-2 gap-6">
         {products.map((p) => {
-          // ✅ Use backend avgRating OR fallback to frontend calculation
           const rating =
             p.avgRating !== undefined
               ? p.avgRating
@@ -86,17 +81,30 @@ export default function BestSelling() {
           return (
             <motion.div
               key={p._id}
-              whileHover={{ y: -6 }}
-              className="group border bg-white cursor-pointer relative overflow-hidden"
+              whileHover={{
+                y: -6,
+                scale: 1.01,
+              }}
+              transition={{ type: "spring", stiffness: 200 }}
+              className="
+                group
+                border border-gray-200
+                bg-white
+                cursor-pointer
+                relative
+                overflow-hidden
+                transition-all duration-300
+                hover:shadow-xl
+              "
               onClick={() => router.push(`/collections/${p._id}`)}
             >
-              {/* Image */}
+              {/* IMAGE */}
               <div className="relative w-full aspect-square overflow-hidden">
                 <Image
                   src={p.thumbnail || "/fallback.png"}
                   alt={p.title}
                   fill
-                  className="object-cover group-hover:scale-105 transition"
+                  className="object-cover group-hover:scale-105 transition duration-500"
                 />
 
                 {/* ⭐ Rating */}
@@ -108,35 +116,18 @@ export default function BestSelling() {
                 </div>
               </div>
 
-              {/* Info */}
+              {/* INFO */}
               <div className="p-6 relative">
                 <h3 className="text-sm font-medium mb-2 line-clamp-1">
                   {p.title}
                 </h3>
 
-                <p className="text-sm text-gray-500 mb-2">
+                <p className="text-sm text-gray-500">
                   ৳{p.discountPrice}
                 </p>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const cart =
-                      JSON.parse(localStorage.getItem("cart")) || [];
-
-                    const existing = cart.find(
-                      (item) => item._id === p._id
-                    );
-
-                    if (existing) existing.quantity += 1;
-                    else cart.push({ ...p, quantity: 1 });
-
-                    localStorage.setItem("cart", JSON.stringify(cart));
-                  }}
-                  className="absolute bottom-0 left-0 w-full bg-black text-white py-2 text-[11px] translate-y-full group-hover:translate-y-0 transition"
-                >
-                  ADD TO CART
-                </button>
+                {/* subtle bottom hover line like your other cards */}
+                <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-black transition-all duration-300 group-hover:w-full" />
               </div>
             </motion.div>
           );

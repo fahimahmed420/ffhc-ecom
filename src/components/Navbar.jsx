@@ -224,7 +224,7 @@ export default function Navbar() {
             <div>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 transition"
+                className="w-8 h-8 flex items-center justify-center cursor-pointer rounded-full hover:bg-black/5 transition"
               >
                 <User size={18} />
               </button>
@@ -237,7 +237,7 @@ export default function Navbar() {
                     exit={{ opacity: 0, y: -10, scale: 0.98 }}
                     transition={{ duration: 0.2 }}
                     className="
-                      absolute right-0 mt-3 w-52
+                      absolute top-10 right-0 mt-3 w-52
                       bg-white/80 backdrop-blur-xl
                       border border-black/10
                       shadow-xl rounded-xl
@@ -250,7 +250,7 @@ export default function Navbar() {
                           router.push("/dashboard");
                           setDropdownOpen(false);
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-black/5 rounded-lg"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-black/10 hover:font-bold rounded-lg"
                       >
                         <LayoutDashboard size={14} />
                         Dashboard
@@ -258,7 +258,7 @@ export default function Navbar() {
 
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-black/5 rounded-lg text-red-500"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-black/5 hover:font-bold rounded-lg text-red-500"
                       >
                         <LogOut size={14} />
                         Logout

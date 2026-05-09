@@ -14,34 +14,56 @@ export default function BottomNav() {
 
   const [open, setOpen] = useState(false);
 
+  // ✅ CART ACTIVE FOR BOTH /cart + /checkout
+  const isCartActive =
+    pathname === "/cart" || pathname === "/checkout";
+
   const items = [
     { icon: Home, path: "/" },
     { icon: Grid, path: "/collections" },
     { icon: ShoppingBag, path: "/cart" },
   ];
 
-  const isActive = (path) => pathname === path;
+  // ✅ ACTIVE CHECK
+  const isActive = (path) => {
+    if (path === "/cart") return isCartActive;
+
+    return pathname === path;
+  };
+
+  // ✅ ONLY SHOW ACTIVE PILL FOR THESE ROUTES
+  const activeLeft =
+    pathname === "/"
+      ? "23px"
+      : pathname === "/collections"
+        ? "88px"
+        : isCartActive
+          ? "151px"
+          : pathname.includes("dashboard")
+            ? "215px"
+            : null;
 
   return (
     <>
       {/* FLOATING DOCK */}
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:hidden">
-
         <div className="relative flex items-center gap-6 px-6 py-3 bg-white/70 backdrop-blur-xl border border-gray-200 shadow-lg rounded-full">
-
-          {/* 🔥 Animated Active Pill */}
-          <motion.div
-            layout
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="absolute top-1/2 -translate-y-1/2 h-10 w-10 bg-black rounded-full"
-            style={{
-              left:
-                isActive("/") ? "23px" :
-                isActive("/collections") ? "88px" :
-                isActive("/cart") ? "151px" :
-                "215px",
-            }}
-          />
+          
+          {/* 🔥 ACTIVE PILL */}
+          {activeLeft && (
+            <motion.div
+              layout
+              transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 30,
+              }}
+              className="absolute top-1/2 -translate-y-1/2 h-10 w-10 bg-black rounded-full"
+              style={{
+                left: activeLeft,
+              }}
+            />
+          )}
 
           {/* NAV ITEMS */}
           {items.map((item, i) => {
@@ -64,7 +86,7 @@ export default function BottomNav() {
             );
           })}
 
-          {/* 👤 PROFILE / LOGIN */}
+          {/* 👤 PROFILE */}
           <button
             onClick={() => {
               if (user) setOpen(true);

@@ -176,7 +176,7 @@ export default function CartPage() {
   }
 
   return (
-    <section className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-6 md:py-10 pb-40 lg:pb-10">
+    <section className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-6 md:py-10 pb-56 lg:pb-10">
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 mb-8">
         <div>
@@ -268,7 +268,7 @@ export default function CartPage() {
                         {item.category}
                       </p>
 
-                      {/* MOBILE PRICE */}
+                      {/* PRICE */}
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <span className="text-xl sm:text-2xl font-black">
                           ৳{item.discountedPrice.toFixed(2)}
@@ -335,9 +335,9 @@ export default function CartPage() {
           })}
         </div>
 
-        {/* SUMMARY */}
-        <div className="lg:sticky lg:top-24 h-fit">
-          <div className="hidden lg:block bg-white border border-gray-200 rounded-3xl p-7 shadow-xl">
+        {/* DESKTOP SUMMARY */}
+        <div className="hidden lg:block sticky top-24 h-fit">
+          <div className="bg-white border border-gray-200 rounded-3xl p-7 shadow-xl">
             <h2 className="text-2xl font-bold mb-8">Order Summary</h2>
 
             <div className="flex justify-between mb-4 text-gray-600">
@@ -374,34 +374,31 @@ export default function CartPage() {
       </div>
 
       {/* MOBILE FLOATING SUMMARY */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-sm text-gray-500">
-              {selectedItems.length} selected
-            </p>
+      <div className="lg:hidden fixed bottom-25 left-3 right-3 z-40">
+        <div className="bg-white/95 backdrop-blur-xl border border-gray-200 rounded-3xl shadow-2xl p-4">
+          <div className="flex items-center justify-between gap-4">
+            {/* LEFT */}
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500">
+                {selectedItems.length} item selected
+              </p>
 
-            <h3 className="text-2xl font-black">
-              ৳{subtotal.toFixed(2)}
-            </h3>
+              <h3 className="text-2xl font-black truncate">
+                ৳{subtotal.toFixed(2)}
+              </h3>
+            </div>
+
+            {/* BUTTON */}
+            <Link href="/checkout" className="w-[55%]">
+              <button
+                disabled={selectedItems.length === 0}
+                className="w-full py-3 rounded-2xl bg-black text-white font-semibold hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Checkout
+              </button>
+            </Link>
           </div>
-
-          <Link href="/checkout" className="w-[55%]">
-            <button
-              disabled={selectedItems.length === 0}
-              className="w-full py-3 rounded-2xl bg-black text-white font-semibold disabled:opacity-40"
-            >
-              Checkout
-            </button>
-          </Link>
         </div>
-
-        <Link
-          href="/collections"
-          className="block text-center text-sm text-gray-500"
-        >
-          Continue Shopping
-        </Link>
       </div>
     </section>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export default function DashboardHome() {
@@ -45,13 +46,10 @@ export default function DashboardHome() {
     fetchWishlistProducts();
   }, [wishlistIds]);
 
-  // =========================
-  // UI
-  // =========================
   return (
     <div className="space-y-6">
 
-      {/* HERO CARD */}
+      {/* HERO */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-black to-gray-800 text-white p-8 shadow-lg">
         <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
 
@@ -68,11 +66,10 @@ export default function DashboardHome() {
         </p>
       </div>
 
-      {/* STATS (UPDATED - MORE USEFUL) */}
+      {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-        {/* Wishlist Count */}
-        <div className="bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
           <p className="text-xs text-gray-500 uppercase tracking-widest">
             Wishlist Items
           </p>
@@ -84,8 +81,7 @@ export default function DashboardHome() {
           </p>
         </div>
 
-        {/* Spent Insight (NEW) */}
-        <div className="bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
           <p className="text-xs text-gray-500 uppercase tracking-widest">
             Estimated Wishlist Value
           </p>
@@ -104,8 +100,7 @@ export default function DashboardHome() {
           </p>
         </div>
 
-        {/* Engagement (NEW) */}
-        <div className="bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
           <p className="text-xs text-gray-500 uppercase tracking-widest">
             Shopping Activity
           </p>
@@ -118,8 +113,8 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* PROFILE CTA */}
-      <div className="bg-white border rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* CTA */}
+      <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h3 className="text-lg font-semibold">
             Complete your profile
@@ -136,8 +131,8 @@ export default function DashboardHome() {
         </Link>
       </div>
 
-      {/* WISHLIST SECTION (MODERN GRID) */}
-      <div className="bg-white border rounded-2xl p-6 shadow-sm">
+      {/* WISHLIST */}
+      <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-sm tracking-widest uppercase text-gray-500">
             Wishlist Preview
@@ -160,17 +155,19 @@ export default function DashboardHome() {
               <Link
                 key={product._id}
                 href={`/collections/${product._id}`}
-                className="group border rounded-xl overflow-hidden hover:shadow-md transition"
+                className="group border border-gray-200 shadow rounded-xl overflow-hidden hover:shadow-md transition"
               >
-                <div className="h-28 overflow-hidden">
-                  <img
+                {/* IMAGE (NEXT IMAGE FIX) */}
+                <div className="relative h-28 bg-gray-50 overflow-hidden">
+                  <Image
                     src={
                       product.images?.[0] ||
                       product.thumbnail ||
                       "/fallback.png"
                     }
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     alt={product.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition duration-300"
                   />
                 </div>
 
