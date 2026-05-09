@@ -250,7 +250,7 @@ export default function Collections() {
                       {/* FINAL PRICE */}
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-black text-base">
-                          $
+                          ৳
                           {(product.discountPrice > 0
                             ? product.discountPrice
                             : product.price
@@ -260,7 +260,7 @@ export default function Collections() {
                         {/* OLD PRICE */}
                         {product.discountPrice > 0 && (
                           <span className="text-sm text-gray-400 line-through">
-                            ${product.price.toFixed(2)}
+                            ৳{product.price.toFixed(2)}
                           </span>
                         )}
                       </div>

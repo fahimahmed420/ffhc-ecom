@@ -39,7 +39,7 @@ export default function BottomNav() {
                 isActive("/") ? "23px" :
                 isActive("/collections") ? "88px" :
                 isActive("/cart") ? "151px" :
-                "200px",
+                "215px",
             }}
           />
 

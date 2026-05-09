@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, ShoppingBag } from "lucide-react";
 
 export default function CartPage() {
   const [cart, setCart] = useState([]);
@@ -16,9 +16,7 @@ export default function CartPage() {
 
   // ================= LOAD CART =================
   useEffect(() => {
-    const stored =
-      JSON.parse(localStorage.getItem("cart")) || [];
-
+    const stored = JSON.parse(localStorage.getItem("cart")) || [];
     setCart(stored);
   }, []);
 
@@ -32,22 +30,14 @@ export default function CartPage() {
     const fetchProducts = async () => {
       try {
         const ids = cart.map((item) =>
-          typeof item === "string"
-            ? item
-            : item.id,
+          typeof item === "string" ? item : item.id,
         );
 
-        const res = await fetch(
-          `/api/products?ids=${ids.join(",")}`,
-        );
+        const res = await fetch(`/api/products?ids=${ids.join(",")}`);
 
         const data = await res.json();
 
         setProducts(data.products || []);
-
-        // ✅ IMPORTANT:
-        // DO NOT AUTO SELECT ITEMS
-        // This keeps all unchecked on reload
       } catch (err) {
         console.error(err);
       } finally {
@@ -61,14 +51,10 @@ export default function CartPage() {
   // ================= HELPERS =================
   const getQty = (id) => {
     const item = cart.find((c) =>
-      typeof c === "string"
-        ? c === id
-        : c.id === id,
+      typeof c === "string" ? c === id : c.id === id,
     );
 
-    return typeof item === "string"
-      ? 1
-      : item?.qty || 1;
+    return typeof item === "string" ? 1 : item?.qty || 1;
   };
 
   // ================= UPDATE QTY =================
@@ -95,35 +81,22 @@ export default function CartPage() {
       return item;
     });
 
-    // ✅ ONLY UPDATE CART
-    // DO NOT TOUCH selectedItems
     setCart(updated);
 
-    localStorage.setItem(
-      "cart",
-      JSON.stringify(updated),
-    );
+    localStorage.setItem("cart", JSON.stringify(updated));
   };
 
   // ================= REMOVE ITEM =================
   const removeItem = (id) => {
     const updated = cart.filter((item) =>
-      typeof item === "string"
-        ? item !== id
-        : item.id !== id,
+      typeof item === "string" ? item !== id : item.id !== id,
     );
 
     setCart(updated);
 
-    localStorage.setItem(
-      "cart",
-      JSON.stringify(updated),
-    );
+    localStorage.setItem("cart", JSON.stringify(updated));
 
-    // remove from selected items too
-    setSelectedItems((prev) =>
-      prev.filter((itemId) => itemId !== id),
-    );
+    setSelectedItems((prev) => prev.filter((itemId) => itemId !== id));
   };
 
   // ================= MERGE =================
@@ -131,10 +104,7 @@ export default function CartPage() {
     return products.map((p) => {
       const qty = getQty(p._id);
 
-      const discountedPrice =
-        p.discountPrice > 0
-          ? p.discountPrice
-          : p.price;
+      const discountedPrice = p.discountPrice > 0 ? p.discountPrice : p.price;
 
       return {
         ...p,
@@ -144,45 +114,36 @@ export default function CartPage() {
     });
   }, [products, cart]);
 
-  // ================= SELECT ITEM =================
+  // ================= SELECT =================
   const toggleSelect = (id) => {
     setSelectedItems((prev) =>
-      prev.includes(id)
-        ? prev.filter((item) => item !== id)
-        : [...prev, id],
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
   // ================= SELECT ALL =================
   const allSelected =
-    merged.length > 0 &&
-    selectedItems.length === merged.length;
+    merged.length > 0 && selectedItems.length === merged.length;
 
   const toggleSelectAll = () => {
     if (allSelected) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(
-        merged.map((p) => p._id),
-      );
+      setSelectedItems(merged.map((p) => p._id));
     }
   };
 
   // ================= SUBTOTAL =================
   const subtotal = merged.reduce((acc, item) => {
-    if (!selectedItems.includes(item._id))
-      return acc;
+    if (!selectedItems.includes(item._id)) return acc;
 
-    return (
-      acc +
-      item.discountedPrice * item.qty
-    );
+    return acc + item.discountedPrice * item.qty;
   }, 0);
 
-  // ================= UI =================
+  // ================= LOADING =================
   if (loading) {
     return (
-      <div className="py-24 text-center text-gray-400">
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
         Loading your cart...
       </div>
     );
@@ -191,14 +152,22 @@ export default function CartPage() {
   // ================= EMPTY =================
   if (merged.length === 0) {
     return (
-      <div className="py-32 text-center">
-        <h2 className="text-3xl font-semibold mb-5">
+      <div className="min-h-screen flex flex-col items-center justify-center px-5 text-center">
+        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mb-6">
+          <ShoppingBag className="w-10 h-10 text-gray-400" />
+        </div>
+
+        <h2 className="text-2xl md:text-4xl font-bold mb-3">
           Your cart feels lonely 🛒
         </h2>
 
+        <p className="text-gray-500 mb-8 max-w-md">
+          Discover premium products and add your favorites to the cart.
+        </p>
+
         <Link
           href="/collections"
-          className="inline-flex px-8 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition"
+          className="inline-flex px-7 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition"
         >
           Explore Products
         </Link>
@@ -207,17 +176,15 @@ export default function CartPage() {
   }
 
   return (
-    <section className="max-w-7xl mx-auto px-4 md:px-8 py-14">
-
+    <section className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-6 md:py-10 pb-40 lg:pb-10">
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-10">
-
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 mb-8">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight">
             Shopping Cart
           </h1>
 
-          <p className="text-gray-500 mt-2">
+          <p className="text-gray-500 mt-2 text-sm md:text-base">
             {merged.length} items in your cart
           </p>
         </div>
@@ -225,7 +192,7 @@ export default function CartPage() {
         {/* SELECT ALL */}
         <button
           onClick={toggleSelectAll}
-          className="flex items-center gap-3 text-sm font-medium"
+          className="flex items-center gap-3 text-sm font-medium w-fit"
         >
           <div
             className={`w-5 h-5 rounded border flex items-center justify-center transition ${
@@ -234,161 +201,134 @@ export default function CartPage() {
                 : "border-gray-300 bg-white"
             }`}
           >
-            {allSelected && (
-              <Check size={14} />
-            )}
+            {allSelected && <Check size={14} />}
           </div>
 
           Select All
         </button>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-10">
-
+      <div className="grid lg:grid-cols-3 gap-6 xl:gap-10">
         {/* ITEMS */}
-        <div className="lg:col-span-2 space-y-5">
-
+        <div className="lg:col-span-2 space-y-4 md:space-y-5">
           {merged.map((item) => {
-            const isSelected =
-              selectedItems.includes(item._id);
+            const isSelected = selectedItems.includes(item._id);
 
             return (
               <motion.div
                 key={item._id}
                 whileHover={{ y: -2 }}
-                className={`group relative flex gap-5 p-5 rounded-3xl border transition-all duration-300 ${
+                className={`relative rounded-3xl border transition-all duration-300 overflow-hidden ${
                   isSelected
                     ? "border-black shadow-lg bg-white"
-                    : "border-gray-200 bg-gray-50/60"
+                    : "border-gray-200 bg-white"
                 }`}
               >
+                <div className="p-4 sm:p-5">
+                  {/* TOP */}
+                  <div className="flex gap-3 sm:gap-5">
+                    {/* CHECKBOX */}
+                    <button
+                      onClick={() => toggleSelect(item._id)}
+                      className={`mt-1 min-w-5 h-5 rounded border flex items-center justify-center transition ${
+                        isSelected
+                          ? "bg-black border-black text-white"
+                          : "border-gray-300 bg-white"
+                      }`}
+                    >
+                      {isSelected && <Check size={13} />}
+                    </button>
 
-                {/* CHECKBOX */}
-                <button
-                  onClick={() =>
-                    toggleSelect(item._id)
-                  }
-                  className={`mt-1 min-w-5 h-5 rounded border flex items-center justify-center transition ${
-                    isSelected
-                      ? "bg-black border-black text-white"
-                      : "border-gray-300 bg-white"
-                  }`}
-                >
-                  {isSelected && (
-                    <Check size={13} />
-                  )}
-                </button>
+                    {/* IMAGE */}
+                    <Link
+                      href={`/collections/${item._id}`}
+                      className="relative min-w-[90px] w-[90px] h-[90px] sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100"
+                    >
+                      <Image
+                        src={
+                          item.images?.[0] ||
+                          item.thumbnail ||
+                          "/fallback.png"
+                        }
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </Link>
 
-                {/* IMAGE */}
-                <Link
-                  href={`/collections/${item._id}`}
-                  className="relative w-28 h-28 rounded-2xl overflow-hidden bg-white border border-gray-100"
-                >
-                  <Image
-                    src={
-                      item.images?.[0] ||
-                      item.thumbnail ||
-                      "/fallback.png"
-                    }
-                    alt={item.title}
-                    fill
-                    className="object-cover"
-                  />
-                </Link>
+                    {/* CONTENT */}
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/collections/${item._id}`}>
+                        <h3 className="font-semibold text-sm sm:text-lg line-clamp-2 hover:underline">
+                          {item.title}
+                        </h3>
+                      </Link>
 
-                {/* CONTENT */}
-                <div className="flex-1">
+                      <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                        {item.category}
+                      </p>
 
-                  <Link
-                    href={`/collections/${item._id}`}
-                  >
-                    <h3 className="font-semibold text-lg line-clamp-2 hover:underline">
-                      {item.title}
-                    </h3>
-                  </Link>
+                      {/* MOBILE PRICE */}
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <span className="text-xl sm:text-2xl font-black">
+                          ৳{item.discountedPrice.toFixed(2)}
+                        </span>
 
-                  <p className="text-sm text-gray-500 mt-1">
-                    {item.category}
-                  </p>
+                        {item.discountPrice > 0 && (
+                          <span className="line-through text-gray-400 text-sm">
+                            ৳{item.price}
+                          </span>
+                        )}
+                      </div>
 
-                  {/* PRICE */}
-                  <div className="flex items-center gap-3 mt-4">
+                      {/* CONTROLS */}
+                      <div className="flex flex-wrap items-center justify-between gap-4 mt-5">
+                        {/* QTY */}
+                        <div className="flex items-center border border-gray-300 rounded-full overflow-hidden">
+                          <button
+                            onClick={() => updateQty(item._id, -1)}
+                            className="w-9 h-9 sm:w-10 sm:h-10 hover:bg-gray-100 transition text-lg"
+                          >
+                            -
+                          </button>
 
-                    <span className="text-2xl font-bold">
-                      $
-                      {item.discountedPrice.toFixed(
-                        2,
-                      )}
-                    </span>
+                          <span className="w-10 text-center font-semibold text-sm sm:text-base">
+                            {item.qty}
+                          </span>
 
-                    {item.discountPrice > 0 && (
-                      <span className="line-through text-gray-400">
-                        ${item.price}
-                      </span>
-                    )}
+                          <button
+                            onClick={() => updateQty(item._id, 1)}
+                            className="w-9 h-9 sm:w-10 sm:h-10 hover:bg-gray-100 transition text-lg"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        {/* REMOVE */}
+                        <button
+                          onClick={() => removeItem(item._id)}
+                          className="text-sm text-red-500 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* QTY */}
-                  <div className="flex items-center gap-3 mt-5">
-
-                    <div className="flex items-center border border-gray-300 rounded-full overflow-hidden">
-
-                      <button
-                        onClick={() =>
-                          updateQty(
-                            item._id,
-                            -1,
-                          )
-                        }
-                        className="w-10 h-10 hover:bg-gray-100 transition"
-                      >
-                        −
-                      </button>
-
-                      <span className="w-10 text-center font-semibold">
-                        {item.qty}
-                      </span>
-
-                      <button
-                        onClick={() =>
-                          updateQty(
-                            item._id,
-                            1,
-                          )
-                        }
-                        className="w-10 h-10 hover:bg-gray-100 transition"
-                      >
-                        +
-                      </button>
+                  {/* BOTTOM TOTAL */}
+                  <div className="mt-5 pt-4 border-t flex items-center justify-between">
+                    <div>
+                      {!isSelected && (
+                        <span className="text-xs text-gray-400">
+                          Not selected
+                        </span>
+                      )}
                     </div>
 
-                    <button
-                      onClick={() =>
-                        removeItem(item._id)
-                      }
-                      className="text-sm text-red-500 hover:underline"
-                    >
-                      Remove
-                    </button>
+                    <p className="text-lg sm:text-2xl font-black">
+                      ৳{(item.discountedPrice * item.qty).toFixed(2)}
+                    </p>
                   </div>
-                </div>
-
-                {/* TOTAL */}
-                <div className="flex flex-col items-end justify-between">
-
-                  <p className="text-xl font-bold">
-                    $
-                    {(
-                      item.discountedPrice *
-                      item.qty
-                    ).toFixed(2)}
-                  </p>
-
-                  {!isSelected && (
-                    <span className="text-xs text-gray-400">
-                      Not selected
-                    </span>
-                  )}
                 </div>
               </motion.div>
             );
@@ -396,48 +336,33 @@ export default function CartPage() {
         </div>
 
         {/* SUMMARY */}
-        <div className="sticky top-24 h-fit">
+        <div className="lg:sticky lg:top-24 h-fit">
+          <div className="hidden lg:block bg-white border border-gray-200 rounded-3xl p-7 shadow-xl">
+            <h2 className="text-2xl font-bold mb-8">Order Summary</h2>
 
-          <div className="bg-white border border-gray-200 rounded-3xl p-7 shadow-xl">
-
-            <h2 className="text-2xl font-bold mb-8">
-              Order Summary
-            </h2>
-
-            {/* SELECTED */}
             <div className="flex justify-between mb-4 text-gray-600">
               <span>Selected Items</span>
 
-              <span className="font-semibold">
-                {selectedItems.length}
-              </span>
+              <span className="font-semibold">{selectedItems.length}</span>
             </div>
 
-            {/* SUBTOTAL */}
             <div className="flex justify-between items-end border-t border-b py-6 mb-6">
-
-              <span className="text-lg font-medium">
-                Subtotal
-              </span>
+              <span className="text-lg font-medium">Subtotal</span>
 
               <span className="text-4xl font-black tracking-tight">
-                ${subtotal.toFixed(2)}
+                ৳{subtotal.toFixed(2)}
               </span>
             </div>
 
-            {/* CHECKOUT */}
             <Link href="/checkout">
               <button
-                disabled={
-                  selectedItems.length === 0
-                }
+                disabled={selectedItems.length === 0}
                 className="w-full py-4 rounded-2xl bg-black text-white font-semibold hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Proceed to Checkout →
               </button>
             </Link>
 
-            {/* CONTINUE */}
             <Link
               href="/collections"
               className="block text-center mt-5 text-sm text-gray-500 hover:text-black transition"
@@ -446,6 +371,37 @@ export default function CartPage() {
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* MOBILE FLOATING SUMMARY */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t border-gray-200 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-sm text-gray-500">
+              {selectedItems.length} selected
+            </p>
+
+            <h3 className="text-2xl font-black">
+              ৳{subtotal.toFixed(2)}
+            </h3>
+          </div>
+
+          <Link href="/checkout" className="w-[55%]">
+            <button
+              disabled={selectedItems.length === 0}
+              className="w-full py-3 rounded-2xl bg-black text-white font-semibold disabled:opacity-40"
+            >
+              Checkout
+            </button>
+          </Link>
+        </div>
+
+        <Link
+          href="/collections"
+          className="block text-center text-sm text-gray-500"
+        >
+          Continue Shopping
+        </Link>
       </div>
     </section>
   );

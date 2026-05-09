@@ -285,18 +285,18 @@ export default function ProductClient({ initialData }) {
           {/* PRICE */}
           <div className="flex items-center gap-4 mb-6 flex-wrap">
             <span className="text-3xl font-bold text-black">
-              ${finalPrice.toFixed(2)}
+              ৳{finalPrice.toFixed(2)}
             </span>
 
             {product.discountPrice > 0 && (
               <span className="line-through text-gray-400 text-lg">
-                ${product.price.toFixed(2)}
+                ৳{product.price.toFixed(2)}
               </span>
             )}
 
             {product.discountPrice > 0 && (
               <span className="bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full">
-                SAVE ${(product.price - product.discountPrice).toFixed(2)}
+                SAVE <span className="text-sm">৳</span>{(product.price - product.discountPrice).toFixed(2)}
               </span>
             )}
           </div>

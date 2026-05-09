@@ -42,7 +42,7 @@ export default function DashboardLayout({ children }) {
     router.push("/auth");
   };
 
-  // ✅ Navigation items with role
+  //  Navigation items with role
   const navItems = [
     { name: "HOME", path: "/", icon: <Home size={14} /> },
 
@@ -58,21 +58,30 @@ export default function DashboardLayout({ children }) {
             path: "/dashboard/manage-product",
             icon: <Package size={14} />,
           },
+          {
+            name: "ADD COUPON",
+            path: "/dashboard/add-coupon",
+            icon: <ClipboardList size={14} />,
+          },
+          {
+            name: "MANAGE ORDERS",
+            path: "/dashboard/manage-orders",
+            icon: <ClipboardList size={14} />,
+          },
         ]
-      : []),
-
-    {
-      name: "ORDERS",
-      path: "/dashboard/orders",
-      icon: <ClipboardList size={14} />,
-    },
+      : [
+          {
+            name: "ORDERS",
+            path: "/dashboard/orders",
+            icon: <ClipboardList size={14} />,
+          },
+        ]),
   ];
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
       <nav className="border-b border-gray-300 px-6 md:px-12 py-4 flex justify-between items-center relative">
-        
         {/* Logo */}
         <Link href="/">
           <h1 className="tracking-[0.2em] cursor-pointer">FFHC</h1>
@@ -117,7 +126,6 @@ export default function DashboardLayout({ children }) {
 
                 {open && (
                   <div className="absolute right-0 mt-3 w-40 bg-white border border-gray-200 shadow-sm text-[11px] tracking-widest">
-                    
                     {/* 🔥 Role label */}
                     <p className="px-4 py-2 text-gray-400 text-[10px]">
                       {role?.toUpperCase()}
@@ -167,7 +175,6 @@ export default function DashboardLayout({ children }) {
       {/* Mobile Menu */}
       {mobileMenu && (
         <div className="fixed inset-0 bg-white z-50 p-6 flex flex-col">
-          
           {/* Top */}
           <div className="flex justify-between items-center mb-10">
             <h1 className="tracking-[0.2em]">FFHC</h1>

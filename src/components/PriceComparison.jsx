@@ -60,7 +60,7 @@ export default function PriceComparison({
 
             {/* Price */}
             <p className="text-3xl font-medium mb-2">
-              ${opt.price}
+              <span className="text-4xl">৳</span>{opt.price}
             </p>
 
             {/* Description */}
