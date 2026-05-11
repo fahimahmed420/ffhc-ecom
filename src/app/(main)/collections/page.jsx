@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
-
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -18,792 +11,294 @@ import {
 } from "react-icons/ai";
 
 import { motion } from "framer-motion";
-
 import { toast, Toaster } from "react-hot-toast";
-
 import { useSearchParams } from "next/navigation";
 
+import { useCart } from "@/context/CartContext";
+
 export default function Collections() {
-  // ======================================================
-  // SEARCH PARAMS
-  // ======================================================
-
   const searchParams = useSearchParams();
+  const search = searchParams.get("search") || "";
 
-  const search =
-    searchParams.get("search") || "";
-
-  // ======================================================
-  // STATES
-  // ======================================================
-
-  const [products, setProducts] =
-    useState([]);
-
-  const [
-    selectedCategory,
-    setSelectedCategory,
-  ] = useState("All");
-
-  const [wishlist, setWishlist] =
-    useState([]);
-
-  const [cart, setCart] = useState([]);
-
-  const [sortOrder, setSortOrder] =
-    useState("default");
-
-  const [categories, setCategories] =
-    useState([]);
+  const [products, setProducts] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [wishlist, setWishlist] = useState([]);
+  const [sortOrder, setSortOrder] = useState("default");
+  const [categories, setCategories] = useState([]);
 
   const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
-  const [hasMore, setHasMore] =
-    useState(true);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [initialLoading, setInitialLoading] =
-    useState(true);
-
-  // ======================================================
-  // REFS
-  // ======================================================
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const loaderRef = useRef(null);
-
   const fetchingRef = useRef(false);
 
-  // ======================================================
-  // LOAD STORAGE
-  // ======================================================
+  const { cart, addToCart } = useCart();
 
+  // ================= WISHLIST =================
   useEffect(() => {
-    const w = localStorage.getItem(
-      "wishlist"
-    );
-
-    const c =
-      localStorage.getItem("cart");
-
+    const w = localStorage.getItem("wishlist");
     if (w) setWishlist(JSON.parse(w));
-
-    if (c) setCart(JSON.parse(c));
   }, []);
-
-  // ======================================================
-  // FETCH CATEGORIES
-  // ======================================================
-
-  useEffect(() => {
-    const fetchCategories =
-      async () => {
-        try {
-          const res = await fetch(
-            "/api/categories",
-            {
-              cache: "force-cache",
-            }
-          );
-
-          const data = await res.json();
-
-          setCategories([
-            ...(data.categories || []),
-          ]);
-        } catch (err) {
-          console.error(err);
-        }
-      };
-
-    fetchCategories();
-  }, []);
-
-  // ======================================================
-  // HELPERS
-  // ======================================================
 
   const updateWishlist = (list) => {
     setWishlist(list);
-
-    localStorage.setItem(
-      "wishlist",
-      JSON.stringify(list)
-    );
+    localStorage.setItem("wishlist", JSON.stringify(list));
   };
-
-  const updateCart = (list) => {
-    setCart(list);
-
-    localStorage.setItem(
-      "cart",
-      JSON.stringify(list)
-    );
-  };
-
-  // ======================================================
-  // WISHLIST
-  // ======================================================
 
   const toggleWishlist = (id) => {
     if (wishlist.includes(id)) {
-      updateWishlist(
-        wishlist.filter((i) => i !== id)
-      );
-
-      toast("Removed from wishlist ❌");
-
+      updateWishlist(wishlist.filter((i) => i !== id));
+      toast("Removed from wishlist");
       return;
     }
-
     updateWishlist([...wishlist, id]);
-
-    toast.success(
-      "Added to wishlist ❤️"
-    );
+    toast.success("Added to wishlist ❤️");
   };
 
-  // ======================================================
-  // CART
-  // ======================================================
+  // ================= CART =================
+  const handleAddToCart = (product) => {
+    const exists = cart.some((item) => item.id === product._id);
 
-  const addToCart = (product) => {
-    if (cart.includes(product._id)) {
-      toast("Already in cart ⚠️");
-
+    if (exists) {
+      toast("Already in cart");
       return;
     }
 
-    const updated = [
-      ...cart,
-      product._id,
-    ];
-
-    updateCart(updated);
-
+    addToCart(product._id, 1);
     toast.success("Added to cart 🛒");
   };
 
-  // ======================================================
-  // SORT LABEL
-  // ======================================================
-
-  const sortQuery = useMemo(() => {
-    if (sortOrder === "asc")
-      return "asc";
-
-    if (sortOrder === "desc")
-      return "desc";
-
-    return "";
-  }, [sortOrder]);
-
-  // ======================================================
-  // FETCH PRODUCTS
-  // ======================================================
+  // ================= FETCH =================
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => setCategories(data.categories || []));
+  }, []);
 
   const fetchProducts = useCallback(
     async (reset = false) => {
-      if (fetchingRef.current)
-        return;
-
-      if (!hasMore && !reset)
-        return;
+      if (fetchingRef.current) return;
+      if (!hasMore && !reset) return;
 
       fetchingRef.current = true;
-
       setLoading(true);
 
       try {
-        const currentPage = reset
-          ? 0
-          : page;
+        const currentPage = reset ? 0 : page;
 
-        const query = new URLSearchParams(
-          {
-            page: currentPage,
-            limit: "12",
-            category:
-              selectedCategory,
-            sort: sortQuery,
-            search,
-          }
-        );
+        const query = new URLSearchParams({
+          page: currentPage,
+          limit: "12",
+          category: selectedCategory,
+          sort: sortOrder,
+          search,
+        });
 
-        const res = await fetch(
-          `/api/products?${query.toString()}`,
-          {
-            cache: "no-store",
-          }
-        );
+        const res = await fetch(`/api/products?${query}`);
 
         const data = await res.json();
 
-        const newProducts =
-          data.products || [];
+        const newProducts = data.products || [];
 
         setProducts((prev) => {
-          if (reset)
-            return newProducts;
+          if (reset) return newProducts;
 
-          const ids = new Set(
-            prev.map((p) => p._id)
-          );
+          const ids = new Set(prev.map((p) => p._id));
+          const filtered = newProducts.filter((p) => !ids.has(p._id));
 
-          const filtered =
-            newProducts.filter(
-              (p) => !ids.has(p._id)
-            );
-
-          return [
-            ...prev,
-            ...filtered,
-          ];
+          return [...prev, ...filtered];
         });
 
         setHasMore(data.hasMore);
-      } catch (err) {
-        console.error(
-          "Product fetch error:",
-          err
-        );
       } finally {
         setLoading(false);
-
         setInitialLoading(false);
-
         fetchingRef.current = false;
       }
     },
-    [
-      page,
-      selectedCategory,
-      sortQuery,
-      search,
-      hasMore,
-    ]
+    [page, selectedCategory, sortOrder, search, hasMore],
   );
-
-  // ======================================================
-  // RESET WHEN FILTER CHANGES
-  // ======================================================
 
   useEffect(() => {
     setProducts([]);
-
     setPage(0);
-
     setHasMore(true);
-
     setInitialLoading(true);
-
     fetchProducts(true);
-  }, [
-    selectedCategory,
-    sortOrder,
-    search,
-  ]);
-
-  // ======================================================
-  // PAGINATION
-  // ======================================================
+  }, [selectedCategory, sortOrder, search]);
 
   useEffect(() => {
     if (page === 0) return;
-
     fetchProducts();
   }, [page]);
 
-  // ======================================================
-  // INFINITE SCROLL
-  // ======================================================
-
+  // ================= INFINITE SCROLL =================
   useEffect(() => {
-    if (!loaderRef.current)
-      return;
-
-    const observer =
-      new IntersectionObserver(
-        (entries) => {
-          if (
-            entries[0].isIntersecting &&
-            hasMore &&
-            !fetchingRef.current
-          ) {
-            setPage(
-              (prev) => prev + 1
-            );
-          }
-        },
-        {
-          threshold: 0.2,
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !fetchingRef.current) {
+          setPage((p) => p + 1);
         }
-      );
+      },
+      { threshold: 0.2 },
+    );
 
-    observer.observe(loaderRef.current);
+    if (loaderRef.current) observer.observe(loaderRef.current);
 
-    return () =>
-      observer.disconnect();
+    return () => observer.disconnect();
   }, [hasMore]);
 
-  // ======================================================
-  // UI
-  // ======================================================
+  // ================= PRICE =================
+  const getPrice = (p) => {
+    return p.discountPrice > 0 ? p.discountPrice : p.price;
+  };
 
   return (
-    <section
-      className="
-        px-4 md:px-12 py-10
-        max-w-7xl mx-auto
-      "
-    >
+    <section className="px-4 md:px-12 py-10 max-w-7xl mx-auto min-h-screen">
       <Toaster position="top-right" />
 
-      {/* ====================================================== */}
       {/* HEADER */}
-      {/* ====================================================== */}
-
-      <div
-        className="
-          mb-8
-          flex flex-col md:flex-row
-          md:items-center
-          md:justify-between
-          gap-4
-        "
-      >
+      <div className="mb-8 flex flex-row items-center justify-between gap-4">
         <div>
-          <h1
-            className="
-              text-3xl md:text-4xl
-              font-semibold
-            "
-          >
-            {search
-              ? `Search: "${search}"`
-              : "Latest Products"}
+          <h1 className="text-3xl md:text-4xl font-semibold text-gray-800">
+            {search ? `Search: "${search}"` : "Latest Products"}
           </h1>
 
-          <p className="text-black/50 mt-2">
-            {products.length} products
-            found
-          </p>
+          <p className="text-gray-500 mt-1">{products.length} products found</p>
         </div>
-
-        {/* SORT */}
 
         <select
           value={sortOrder}
-          onChange={(e) =>
-            setSortOrder(
-              e.target.value
-            )
-          }
-          className="
-            px-4 py-2 rounded-xl
-            border border-black/10
-            bg-white
-            outline-none
-          "
+          onChange={(e) => setSortOrder(e.target.value)}
+          className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-700"
         >
-          <option value="default">
-            Newest
-          </option>
-
-          <option value="asc">
-            Price: Low → High
-          </option>
-
-          <option value="desc">
-            Price: High → Low
-          </option>
+          <option value="default">Newest</option>
+          <option value="asc">Price: Low → High</option>
+          <option value="desc">Price: High → Low</option>
         </select>
       </div>
 
-      {/* ====================================================== */}
-      {/* CATEGORIES */}
-      {/* ====================================================== */}
-
+      {/* CATEGORIES (MOBILE FIX) */}
       {!search && (
-        <div
-          className="
-            mb-8
-            flex flex-wrap gap-2
-          "
-        >
-          {categories.map((cat, i) => (
-            <button
-              key={i}
-              onClick={() =>
-                setSelectedCategory(
-                  cat.name
-                )
-              }
-              className={`
-                px-4 py-2 rounded-full
-                text-sm flex items-center gap-2
-                transition
-                ${
-                  selectedCategory ===
-                  cat.name
-                    ? "bg-black text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
-                }
-              `}
-            >
-              {cat.name}
-
-              {cat.count > 0 && (
-                <span
-                  className="
-                    text-xs
-                    bg-black/10
-                    px-2 py-0.5
-                    rounded-full
-                  "
-                >
-                  {cat.count}
-                </span>
-              )}
-            </button>
-          ))}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat, i) => (
+              <button
+                key={i}
+                onClick={() => setSelectedCategory(cat.name)}
+                className={`
+            whitespace-nowrap px-3 py-1.5 rounded-full text-xs
+            border transition
+            ${
+              selectedCategory === cat.name
+                ? "bg-gray-900 text-white border-gray-900"
+                : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+            }
+          `}
+              >
+                {cat.name}
+                {cat.count > 0 && (
+                  <span className="ml-1 text-[10px] opacity-60">
+                    ({cat.count})
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* ====================================================== */}
-      {/* LOADING SKELETON */}
-      {/* ====================================================== */}
+      {/* PRODUCTS */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        {products.map((product) => {
+          const isInCart = cart.some((i) => i.id === product._id);
 
-      {initialLoading ? (
-        <div
-          className="
-            grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4
-            gap-6
-          "
-        >
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="
-                animate-pulse
-                rounded-2xl
-                overflow-hidden
-                border
-                border-gray-200
-              "
-            >
-              <div
-                className="
-                  h-[220px]
-                  bg-black/5
-                "
-              />
+          return (
+            <motion.div key={product._id} whileHover={{ y: -3 }}>
+              <Link href={`/collections/${product._id}`}>
+                <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition">
+                  {/* IMAGE */}
+                  <div className="relative h-[220px] bg-gray-100">
+                    <Image
+                      src={product.images?.[0] || product.thumbnail}
+                      alt={product.title}
+                      fill
+                      className="object-cover"
+                    />
 
-              <div className="p-4 space-y-3">
-                <div
-                  className="
-                    h-4 bg-black/5 rounded
-                  "
-                />
-
-                <div
-                  className="
-                    h-4 w-1/2
-                    bg-black/5 rounded
-                  "
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <>
-          {/* ====================================================== */}
-          {/* EMPTY */}
-          {/* ====================================================== */}
-
-          {products.length === 0 ? (
-            <div
-              className="
-                py-24 text-center
-              "
-            >
-              <h2
-                className="
-                  text-2xl font-semibold
-                "
-              >
-                No products found
-              </h2>
-
-              <p
-                className="
-                  mt-2 text-black/50
-                "
-              >
-                Try another search
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* ====================================================== */}
-              {/* PRODUCTS */}
-              {/* ====================================================== */}
-
-              <div
-                className="
-                  grid
-                  grid-cols-2
-                  md:grid-cols-3
-                  lg:grid-cols-4
-                  gap-6
-                "
-              >
-                {products.map(
-                  (product) => (
-                    <motion.div
-                      key={product._id}
-                      whileHover={{
-                        y: -4,
+                    {/* WISHLIST */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleWishlist(product._id);
                       }}
-                      transition={{
-                        duration: 0.2,
-                      }}
+                      className="absolute top-3 right-3 bg-white/90 p-2 rounded-full"
                     >
-                      <Link
-                        href={`/collections/${product._id}`}
-                      >
-                        <div
-                          className="
-                            bg-white
-                            rounded-2xl
-                            overflow-hidden
-                            border border-black/5
-                            hover:shadow-xl
-                            transition-all duration-300
-                          "
-                        >
-                          {/* IMAGE */}
+                      {wishlist.includes(product._id) ? (
+                        <AiFillHeart className="text-red-500" />
+                      ) : (
+                        <AiOutlineHeart />
+                      )}
+                    </button>
+                  </div>
 
-                          <div
-                            className="
-                              relative
-                              h-[240px]
-                              overflow-hidden
-                            "
-                          >
-                            <Image
-                              src={
-                                product
-                                  .images?.[0] ||
-                                product.thumbnail
-                              }
-                              alt={
-                                product.title
-                              }
-                              fill
-                              sizes="(max-width:768px) 50vw, 25vw"
-                              className="
-                                object-cover
-                                hover:scale-105
-                                transition-transform duration-500
-                              "
-                              priority={
-                                false
-                              }
-                            />
+                  {/* CONTENT */}
+                  <div className="p-4">
+                    <h3 className="font-medium text-gray-800 line-clamp-1">
+                      {product.title}
+                    </h3>
 
-                            {/* WISHLIST */}
+                    <p className="text-xs text-gray-400 mt-1">
+                      {product.category}
+                    </p>
 
-                            <button
-                              onClick={(
-                                e
-                              ) => {
-                                e.preventDefault();
-
-                                toggleWishlist(
-                                  product._id
-                                );
-                              }}
-                              className="
-                                absolute top-3 right-3
-                                bg-white/90
-                                backdrop-blur-md
-                                p-2.5
-                                rounded-full
-                                shadow-md
-                                hover:scale-110
-                                transition
-                              "
-                            >
-                              {wishlist.includes(
-                                product._id
-                              ) ? (
-                                <AiFillHeart className="text-red-500 text-lg" />
-                              ) : (
-                                <AiOutlineHeart className="text-lg" />
-                              )}
-                            </button>
-                          </div>
-
-                          {/* CONTENT */}
-
-                          <div className="p-4">
-                            <h3
-                              className="
-                                text-sm md:text-base
-                                font-medium
-                                line-clamp-1
-                              "
-                            >
-                              {
-                                product.title
-                              }
-                            </h3>
-
-                            <p
-                              className="
-                                text-xs
-                                text-black/40
-                                mt-1
-                              "
-                            >
-                              {
-                                product.category
-                              }
+                    {/* PRICE */}
+                    <div className="mt-3 flex items-end justify-between">
+                      <div>
+                        {product.discountPrice > 0 ? (
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-gray-400 line-through">
+                              ৳{Number(product.price).toFixed(0)}
                             </p>
-
-                            {/* PRICE */}
-
-                            <div
-                              className="
-                                mt-4
-                                flex items-center
-                                justify-between
-                                gap-2
-                              "
-                            >
-                              <div>
-                                <div
-                                  className="
-                                    flex items-center
-                                    gap-2 flex-wrap
-                                  "
-                                >
-                                  <p
-                                    className="
-                                      font-semibold
-                                      text-base
-                                    "
-                                  >
-                                    ৳
-                                    {(
-                                      product.discountPrice >
-                                      0
-                                        ? product.discountPrice
-                                        : product.price
-                                    ).toFixed(
-                                      2
-                                    )}
-                                  </p>
-
-                                  {product.discountPrice >
-                                    0 && (
-                                    <span
-                                      className="
-                                        text-sm
-                                        text-gray-400
-                                        line-through
-                                      "
-                                    >
-                                      ৳
-                                      {product.price.toFixed(
-                                        2
-                                      )}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* CART */}
-
-                              <button
-                                onClick={(
-                                  e
-                                ) => {
-                                  e.preventDefault();
-
-                                  addToCart(
-                                    product
-                                  );
-                                }}
-                                className="
-                                  p-2.5 rounded-full
-                                  hover:bg-black
-                                  hover:text-white
-                                  transition
-                                "
-                              >
-                                <AiOutlineShoppingCart className="text-lg" />
-                              </button>
-                            </div>
+                            <p className="font-semibold text-gray-900">
+                              ৳{Number(product.discountPrice).toFixed(0)}
+                            </p>
                           </div>
-                        </div>
-                      </Link>
-                    </motion.div>
-                  )
-                )}
-              </div>
+                        ) : (
+                          <p className="font-semibold text-gray-900">
+                            ৳{Number(product.price).toFixed(0)}
+                          </p>
+                        )}
+                      </div>
 
-              {/* ====================================================== */}
-              {/* LOAD MORE TRIGGER */}
-              {/* ====================================================== */}
-
-              <div
-                ref={loaderRef}
-                className="h-20"
-              />
-
-              {/* ====================================================== */}
-              {/* LOADING MORE */}
-              {/* ====================================================== */}
-
-              {loading &&
-                !initialLoading && (
-                  <div
-                    className="
-                      text-center
-                      py-6
-                      text-black/50
-                    "
-                  >
-                    Loading more
-                    products...
+                      {/* CART */}
+                      <button
+                        disabled={isInCart}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleAddToCart(product);
+                        }}
+                        className={`p-2 rounded-full border transition ${
+                          isInCart
+                            ? "bg-gray-100 text-gray-400"
+                            : "hover:bg-gray-900 hover:text-white"
+                        }`}
+                      >
+                        <AiOutlineShoppingCart />
+                      </button>
+                    </div>
                   </div>
-                )}
+                </div>
+              </Link>
+            </motion.div>
+          );
+        })}
+      </div>
 
-              {/* ====================================================== */}
-              {/* END */}
-              {/* ====================================================== */}
-
-              {!hasMore &&
-                products.length >
-                  0 && (
-                  <div
-                    className="
-                      text-center
-                      py-10
-                      text-black/40
-                    "
-                  >
-                    No more products
-                  </div>
-                )}
-            </>
-          )}
-        </>
-      )}
+      <div ref={loaderRef} className="h-20" />
     </section>
   );
 }

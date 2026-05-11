@@ -1,86 +1,375 @@
 import QRCode from "qrcode";
 
 export async function generateInvoiceHTML(order) {
+  // ===============================
+  // QR CODE
+  // ===============================
   const qrData = await QRCode.toDataURL(
     JSON.stringify({
       orderId: order.orderId,
       total: order.total,
-      email: order.customer.email,
+      email: order.customer?.email,
     })
   );
 
+  // ===============================
+  // ITEMS HTML
+  // ===============================
   const itemsHTML = (order.items || [])
-    .map(
-      (i, idx) => `
-      <tr>
-        <td>${idx + 1}</td>
-        <td>${i.title}</td>
-        <td style="text-align:center">${i.qty}</td>
-        <td style="text-align:right">৳${i.discountedPrice}</td>
-        <td style="text-align:right">৳${(
-          i.qty * i.discountedPrice
-        ).toFixed(0)}</td>
-      </tr>
-    `
-    )
+    .map((item, idx) => {
+      const qty = Number(item.qty || 1);
+
+      const price = Number(item.price || 0);
+
+      const total = Number(item.total || price * qty);
+
+      return `
+        <tr>
+          <td>${idx + 1}</td>
+
+          <td>
+            ${item.title || "Product"}
+          </td>
+
+          <td style="text-align:center;">
+            ${qty}
+          </td>
+
+          <td style="text-align:right;">
+            ৳${price.toFixed(2)}
+          </td>
+
+          <td style="text-align:right;font-weight:bold;">
+            ৳${total.toFixed(2)}
+          </td>
+        </tr>
+      `;
+    })
     .join("");
 
+  // ===============================
+  // RETURN HTML
+  // ===============================
   return `
+  <!DOCTYPE html>
+
   <html>
-  <head>
-    <style>
-      body { font-family: Arial; padding: 30px; }
-      .header { text-align:center; border-bottom:3px solid #0C6AED; }
-      .brand { font-size:30px; color:#0C6AED; font-weight:bold; }
+    <head>
+      <meta charset="UTF-8" />
 
-      table { width:100%; border-collapse:collapse; margin-top:20px; }
-      th { background:#0C6AED; color:white; padding:10px; }
-      td { border-bottom:1px solid #ddd; padding:10px; }
+      <title>
+        Invoice - ${order.orderId}
+      </title>
 
-      .footer { margin-top:30px; text-align:center; font-size:12px; }
-      .qr { margin-top:20px; text-align:center; }
-    </style>
-  </head>
+      <style>
+        * {
+          box-sizing: border-box;
+        }
 
-  <body>
+        body {
+          font-family: Arial, sans-serif;
+          padding: 40px;
+          color: #111;
+          background: #fff;
+        }
 
-    <div class="header">
-      <div class="brand">Family Fashion Hub China Store</div>
-      <p>INVOICE</p>
-      <p><b>Order ID:</b> ${order.orderId}</p>
-    </div>
+        h1,h2,h3,h4,h5,h6,p {
+          margin: 0;
+        }
 
-    <p><b>Name:</b> ${order.customer.name}</p>
-    <p><b>Phone:</b> ${order.customer.phone}</p>
-    <p><b>Email:</b> ${order.customer.email}</p>
+        .header {
+          text-align: center;
+          border-bottom: 3px solid #0C6AED;
+          padding-bottom: 20px;
+          margin-bottom: 35px;
+        }
 
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Product</th>
-          <th>Qty</th>
-          <th>Price</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${itemsHTML}
-      </tbody>
-    </table>
+        .brand {
+          font-size: 34px;
+          font-weight: bold;
+          color: #0C6AED;
+          margin-bottom: 8px;
+        }
 
-    <h3 style="text-align:right;">TOTAL: ৳${order.total}</h3>
+        .invoice-title {
+          font-size: 20px;
+          font-weight: bold;
+          margin-top: 10px;
+        }
 
-    <div class="qr">
-      <p>Scan to verify order</p>
-      <img src="${qrData}" width="120" />
-    </div>
+        .muted {
+          color: #666;
+          font-size: 14px;
+        }
 
-    <div class="footer">
-      Cash on Delivery | Thank you for shopping with us ❤️
-    </div>
+        .info-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 30px;
+          margin-bottom: 30px;
+        }
 
-  </body>
+        .info-box {
+          border: 1px solid #eee;
+          border-radius: 14px;
+          padding: 20px;
+        }
+
+        .info-box h3 {
+          margin-bottom: 15px;
+          font-size: 18px;
+        }
+
+        .info-box p {
+          margin-bottom: 8px;
+          line-height: 1.5;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 20px;
+          overflow: hidden;
+          border-radius: 14px;
+        }
+
+        thead {
+          background: #0C6AED;
+          color: white;
+        }
+
+        th {
+          padding: 14px;
+          text-align: left;
+          font-size: 14px;
+        }
+
+        td {
+          padding: 14px;
+          border-bottom: 1px solid #eee;
+          font-size: 14px;
+        }
+
+        tbody tr:nth-child(even) {
+          background: #fafafa;
+        }
+
+        .summary {
+          width: 340px;
+          margin-left: auto;
+          margin-top: 30px;
+        }
+
+        .summary table td {
+          border: none;
+          padding: 10px 0;
+        }
+
+        .grand-total td {
+          border-top: 2px solid #111 !important;
+          padding-top: 18px !important;
+          font-size: 24px;
+          font-weight: bold;
+        }
+
+        .green {
+          color: green;
+        }
+
+        .qr {
+          text-align: center;
+          margin-top: 50px;
+        }
+
+        .qr img {
+          margin-top: 10px;
+        }
+
+        .footer {
+          margin-top: 50px;
+          text-align: center;
+          font-size: 13px;
+          color: #777;
+        }
+
+        .badge {
+          display: inline-block;
+          background: #111;
+          color: white;
+          padding: 6px 12px;
+          border-radius: 999px;
+          font-size: 12px;
+          margin-top: 10px;
+        }
+      </style>
+    </head>
+
+    <body>
+      <!-- HEADER -->
+      <div class="header">
+        <div class="brand">
+          Family Fashion Hub China Store
+        </div>
+
+        <div class="invoice-title">
+          INVOICE
+        </div>
+
+        <p class="muted" style="margin-top:10px;">
+          Order ID:
+          <strong>${order.orderId || "N/A"}</strong>
+        </p>
+
+        <div class="badge">
+          ${order.paymentMethod || "COD"}
+        </div>
+      </div>
+
+      <!-- CUSTOMER -->
+      <div class="info-grid">
+        <div class="info-box">
+          <h3>
+            Customer Information
+          </h3>
+
+          <p>
+            <strong>Name:</strong>
+            ${order.customer?.name || "N/A"}
+          </p>
+
+          <p>
+            <strong>Phone:</strong>
+            ${order.customer?.phone || "N/A"}
+          </p>
+
+          <p>
+            <strong>Email:</strong>
+            ${order.customer?.email || "N/A"}
+          </p>
+        </div>
+
+        <div class="info-box">
+          <h3>
+            Shipping Address
+          </h3>
+
+          <p>
+            ${order.customer?.address || ""}
+          </p>
+
+          <p>
+            ${order.customer?.unionName || ""}
+            ${order.customer?.upazilaName || ""}
+          </p>
+
+          <p>
+            ${order.customer?.districtName || ""}
+            ${order.customer?.divisionName || ""}
+          </p>
+        </div>
+      </div>
+
+      <!-- PRODUCTS -->
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+
+            <th>Product</th>
+
+            <th style="text-align:center;">
+              Qty
+            </th>
+
+            <th style="text-align:right;">
+              Unit Price
+            </th>
+
+            <th style="text-align:right;">
+              Total
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          ${itemsHTML}
+        </tbody>
+      </table>
+
+      <!-- SUMMARY -->
+      <div class="summary">
+        <table>
+          <tr>
+            <td>
+              Subtotal
+            </td>
+
+            <td style="text-align:right;">
+              ৳${Number(order.subtotal || 0).toFixed(2)}
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              Shipping
+            </td>
+
+            <td style="text-align:right;">
+              ৳${Number(order.shipping || 0).toFixed(2)}
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              Discount
+            </td>
+
+            <td
+              style="
+                text-align:right;
+                color:green;
+              "
+            >
+              -৳${Number(order.discount || 0).toFixed(2)}
+            </td>
+          </tr>
+
+          <tr class="grand-total">
+            <td>
+              Grand Total
+            </td>
+
+            <td style="text-align:right;">
+              ৳${Number(order.total || 0).toFixed(2)}
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- QR -->
+      <div class="qr">
+        <p>
+          Scan to verify order
+        </p>
+
+        <img
+          src="${qrData}"
+          width="130"
+          height="130"
+        />
+      </div>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        <p>
+          Cash on Delivery | Thank you for shopping with us ❤️
+        </p>
+
+        <p style="margin-top:8px;">
+          This invoice was generated automatically.
+        </p>
+      </div>
+    </body>
   </html>
   `;
 }

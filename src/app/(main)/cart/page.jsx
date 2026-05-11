@@ -6,105 +6,89 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Check, ShoppingBag } from "lucide-react";
 
-export default function CartPage() {
-  const [cart, setCart] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 
-  // ================= CHECKED ITEMS =================
+export default function CartPage() {
+  const { user } = useAuth();
+
+  const {
+    cart,
+    loading,
+    updateQty,
+    removeItem,
+  } = useCart();
+
+  const [products, setProducts] = useState([]);
+
   const [selectedItems, setSelectedItems] = useState([]);
 
-  // ================= LOAD CART =================
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("cart")) || [];
-    setCart(stored);
-  }, []);
+  /* ======================================================
+     FETCH PRODUCTS
+  ====================================================== */
 
-  // ================= FETCH PRODUCTS =================
   useEffect(() => {
+    if (!user?.uid) {
+      setProducts([]);
+      return;
+    }
+
     if (cart.length === 0) {
-      setLoading(false);
+      setProducts([]);
       return;
     }
 
     const fetchProducts = async () => {
       try {
         const ids = cart.map((item) =>
-          typeof item === "string" ? item : item.id,
+          typeof item === "string"
+            ? item
+            : item.id,
         );
 
-        const res = await fetch(`/api/products?ids=${ids.join(",")}`);
+        const res = await fetch(
+          `/api/products?ids=${ids.join(",")}`,
+        );
 
         const data = await res.json();
 
         setProducts(data.products || []);
       } catch (err) {
         console.error(err);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchProducts();
-  }, [cart]);
+  }, [cart, user]);
 
-  // ================= HELPERS =================
+  /* ======================================================
+     HELPERS
+  ====================================================== */
+
   const getQty = (id) => {
     const item = cart.find((c) =>
-      typeof c === "string" ? c === id : c.id === id,
+      typeof c === "string"
+        ? c === id
+        : c.id === id,
     );
 
-    return typeof item === "string" ? 1 : item?.qty || 1;
+    return typeof item === "string"
+      ? 1
+      : item?.qty || 1;
   };
 
-  // ================= UPDATE QTY =================
-  const updateQty = (id, delta) => {
-    const updated = cart.map((item) => {
-      if (typeof item === "string") {
-        if (item === id) {
-          return {
-            id,
-            qty: Math.max(1, 1 + delta),
-          };
-        }
+  /* ======================================================
+     MERGE PRODUCTS + CART
+  ====================================================== */
 
-        return item;
-      }
-
-      if (item.id === id) {
-        return {
-          ...item,
-          qty: Math.max(1, item.qty + delta),
-        };
-      }
-
-      return item;
-    });
-
-    setCart(updated);
-
-    localStorage.setItem("cart", JSON.stringify(updated));
-  };
-
-  // ================= REMOVE ITEM =================
-  const removeItem = (id) => {
-    const updated = cart.filter((item) =>
-      typeof item === "string" ? item !== id : item.id !== id,
-    );
-
-    setCart(updated);
-
-    localStorage.setItem("cart", JSON.stringify(updated));
-
-    setSelectedItems((prev) => prev.filter((itemId) => itemId !== id));
-  };
-
-  // ================= MERGE =================
   const merged = useMemo(() => {
     return products.map((p) => {
-      const qty = getQty(p._id);
+      const qty = getQty(String(p._id));
 
-      const discountedPrice = p.discountPrice > 0 ? p.discountPrice : p.price;
+      const discountedPrice =
+        p.discountPrice > 0
+          ? p.discountPrice
+          : p.price;
 
       return {
         ...p,
@@ -114,33 +98,80 @@ export default function CartPage() {
     });
   }, [products, cart]);
 
-  // ================= SELECT =================
+  /* ======================================================
+     AUTO SELECT ALL
+  ====================================================== */
+
+  useEffect(() => {
+    if (
+      merged.length > 0 &&
+      selectedItems.length === 0
+    ) {
+      setSelectedItems(
+        merged.map((p) => String(p._id)),
+      );
+    }
+  }, [merged]);
+
+  /* ======================================================
+     SELECT
+  ====================================================== */
+
   const toggleSelect = (id) => {
     setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+      prev.includes(id)
+        ? prev.filter((item) => item !== id)
+        : [...prev, id],
     );
   };
 
-  // ================= SELECT ALL =================
   const allSelected =
-    merged.length > 0 && selectedItems.length === merged.length;
+    merged.length > 0 &&
+    selectedItems.length === merged.length;
 
   const toggleSelectAll = () => {
     if (allSelected) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(merged.map((p) => p._id));
+      setSelectedItems(
+        merged.map((p) => String(p._id)),
+      );
     }
   };
 
-  // ================= SUBTOTAL =================
-  const subtotal = merged.reduce((acc, item) => {
-    if (!selectedItems.includes(item._id)) return acc;
+  /* ======================================================
+     REMOVE
+  ====================================================== */
 
-    return acc + item.discountedPrice * item.qty;
+  const handleRemove = async (id) => {
+    await removeItem(id);
+
+    setSelectedItems((prev) =>
+      prev.filter((itemId) => itemId !== id),
+    );
+  };
+
+  /* ======================================================
+     SUBTOTAL
+  ====================================================== */
+
+  const subtotal = merged.reduce((acc, item) => {
+    if (
+      !selectedItems.includes(String(item._id))
+    ) {
+      return acc;
+    }
+
+    return (
+      acc +
+      item.discountedPrice * item.qty
+    );
   }, 0);
 
-  // ================= LOADING =================
+  /* ======================================================
+     LOADING
+  ====================================================== */
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-400">
@@ -149,8 +180,11 @@ export default function CartPage() {
     );
   }
 
-  // ================= EMPTY =================
-  if (merged.length === 0) {
+  /* ======================================================
+     EMPTY
+  ====================================================== */
+
+  if (!user?.uid || merged.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-5 text-center">
         <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mb-6">
@@ -162,7 +196,8 @@ export default function CartPage() {
         </h2>
 
         <p className="text-gray-500 mb-8 max-w-md">
-          Discover premium products and add your favorites to the cart.
+          Discover premium products and add
+          your favorites to the cart.
         </p>
 
         <Link
@@ -174,6 +209,10 @@ export default function CartPage() {
       </div>
     );
   }
+
+  /* ======================================================
+     UI
+  ====================================================== */
 
   return (
     <section className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-6 md:py-10 pb-56 lg:pb-10">
@@ -201,7 +240,9 @@ export default function CartPage() {
                 : "border-gray-300 bg-white"
             }`}
           >
-            {allSelected && <Check size={14} />}
+            {allSelected && (
+              <Check size={14} />
+            )}
           </div>
 
           Select All
@@ -212,11 +253,14 @@ export default function CartPage() {
         {/* ITEMS */}
         <div className="lg:col-span-2 space-y-4 md:space-y-5">
           {merged.map((item) => {
-            const isSelected = selectedItems.includes(item._id);
+            const itemId = String(item._id);
+
+            const isSelected =
+              selectedItems.includes(itemId);
 
             return (
               <motion.div
-                key={item._id}
+                key={itemId}
                 whileHover={{ y: -2 }}
                 className={`relative rounded-3xl border transition-all duration-300 overflow-hidden ${
                   isSelected
@@ -229,19 +273,23 @@ export default function CartPage() {
                   <div className="flex gap-3 sm:gap-5">
                     {/* CHECKBOX */}
                     <button
-                      onClick={() => toggleSelect(item._id)}
+                      onClick={() =>
+                        toggleSelect(itemId)
+                      }
                       className={`mt-1 min-w-5 h-5 rounded border flex items-center justify-center transition ${
                         isSelected
                           ? "bg-black border-black text-white"
                           : "border-gray-300 bg-white"
                       }`}
                     >
-                      {isSelected && <Check size={13} />}
+                      {isSelected && (
+                        <Check size={13} />
+                      )}
                     </button>
 
                     {/* IMAGE */}
                     <Link
-                      href={`/collections/${item._id}`}
+                      href={`/collections/${itemId}`}
                       className="relative min-w-[90px] w-[90px] h-[90px] sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100"
                     >
                       <Image
@@ -258,7 +306,9 @@ export default function CartPage() {
 
                     {/* CONTENT */}
                     <div className="flex-1 min-w-0">
-                      <Link href={`/collections/${item._id}`}>
+                      <Link
+                        href={`/collections/${itemId}`}
+                      >
                         <h3 className="font-semibold text-sm sm:text-lg line-clamp-2 hover:underline">
                           {item.title}
                         </h3>
@@ -271,10 +321,14 @@ export default function CartPage() {
                       {/* PRICE */}
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <span className="text-xl sm:text-2xl font-black">
-                          ৳{item.discountedPrice.toFixed(2)}
+                          ৳
+                          {item.discountedPrice.toFixed(
+                            2,
+                          )}
                         </span>
 
-                        {item.discountPrice > 0 && (
+                        {item.discountPrice >
+                          0 && (
                           <span className="line-through text-gray-400 text-sm">
                             ৳{item.price}
                           </span>
@@ -286,7 +340,12 @@ export default function CartPage() {
                         {/* QTY */}
                         <div className="flex items-center border border-gray-300 rounded-full overflow-hidden">
                           <button
-                            onClick={() => updateQty(item._id, -1)}
+                            onClick={() =>
+                              updateQty(
+                                itemId,
+                                -1,
+                              )
+                            }
                             className="w-9 h-9 sm:w-10 sm:h-10 hover:bg-gray-100 transition text-lg"
                           >
                             -
@@ -297,8 +356,27 @@ export default function CartPage() {
                           </span>
 
                           <button
-                            onClick={() => updateQty(item._id, 1)}
-                            className="w-9 h-9 sm:w-10 sm:h-10 hover:bg-gray-100 transition text-lg"
+                            onClick={() => {
+                              if (
+                                item.qty <
+                                item.stock
+                              ) {
+                                updateQty(
+                                  itemId,
+                                  1,
+                                );
+                              }
+                            }}
+                            className={`w-9 h-9 sm:w-10 sm:h-10 transition text-lg ${
+                              item.qty >=
+                              item.stock
+                                ? "opacity-40 cursor-not-allowed"
+                                : "hover:bg-gray-100"
+                            }`}
+                            disabled={
+                              item.qty >=
+                              item.stock
+                            }
                           >
                             +
                           </button>
@@ -306,7 +384,11 @@ export default function CartPage() {
 
                         {/* REMOVE */}
                         <button
-                          onClick={() => removeItem(item._id)}
+                          onClick={() =>
+                            handleRemove(
+                              itemId,
+                            )
+                          }
                           className="text-sm text-red-500 hover:underline"
                         >
                           Remove
@@ -315,7 +397,7 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  {/* BOTTOM TOTAL */}
+                  {/* BOTTOM */}
                   <div className="mt-5 pt-4 border-t flex items-center justify-between">
                     <div>
                       {!isSelected && (
@@ -326,7 +408,11 @@ export default function CartPage() {
                     </div>
 
                     <p className="text-lg sm:text-2xl font-black">
-                      ৳{(item.discountedPrice * item.qty).toFixed(2)}
+                      ৳
+                      {(
+                        item.discountedPrice *
+                        item.qty
+                      ).toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -338,30 +424,42 @@ export default function CartPage() {
         {/* DESKTOP SUMMARY */}
         <div className="hidden lg:block sticky top-24 h-fit">
           <div className="bg-white border border-gray-200 rounded-3xl p-7 shadow-xl">
-            <h2 className="text-2xl font-bold mb-8">Order Summary</h2>
+            <h2 className="text-2xl font-bold mb-8">
+              Order Summary
+            </h2>
 
             <div className="flex justify-between mb-4 text-gray-600">
               <span>Selected Items</span>
 
-              <span className="font-semibold">{selectedItems.length}</span>
+              <span className="font-semibold">
+                {selectedItems.length}
+              </span>
             </div>
 
             <div className="flex justify-between items-end border-t border-b py-6 mb-6">
-              <span className="text-lg font-medium">Subtotal</span>
+              <span className="text-lg font-medium">
+                Subtotal
+              </span>
 
               <span className="text-4xl font-black tracking-tight">
                 ৳{subtotal.toFixed(2)}
               </span>
             </div>
 
-            <Link href="/checkout">
+            {selectedItems.length === 0 ? (
               <button
-                disabled={selectedItems.length === 0}
-                className="w-full py-4 rounded-2xl bg-black text-white font-semibold hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled
+                className="w-full py-4 rounded-2xl bg-black text-white font-semibold opacity-40 cursor-not-allowed"
               >
                 Proceed to Checkout →
               </button>
-            </Link>
+            ) : (
+              <Link href="/checkout">
+                <button className="w-full py-4 rounded-2xl bg-black text-white font-semibold hover:bg-gray-800 transition">
+                  Proceed to Checkout →
+                </button>
+              </Link>
+            )}
 
             <Link
               href="/collections"
@@ -374,13 +472,14 @@ export default function CartPage() {
       </div>
 
       {/* MOBILE FLOATING SUMMARY */}
-      <div className="lg:hidden fixed bottom-25 left-3 right-3 z-40">
+      <div className="lg:hidden fixed bottom-6 left-3 right-3 z-40">
         <div className="bg-white/95 backdrop-blur-xl border border-gray-200 rounded-3xl shadow-2xl p-4">
           <div className="flex items-center justify-between gap-4">
             {/* LEFT */}
             <div className="min-w-0">
               <p className="text-xs text-gray-500">
-                {selectedItems.length} item selected
+                {selectedItems.length} item
+                selected
               </p>
 
               <h3 className="text-2xl font-black truncate">
@@ -389,14 +488,23 @@ export default function CartPage() {
             </div>
 
             {/* BUTTON */}
-            <Link href="/checkout" className="w-[55%]">
+            {selectedItems.length === 0 ? (
               <button
-                disabled={selectedItems.length === 0}
-                className="w-full py-3 rounded-2xl bg-black text-white font-semibold hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled
+                className="w-[55%] py-3 rounded-2xl bg-black text-white font-semibold opacity-40 cursor-not-allowed"
               >
                 Checkout
               </button>
-            </Link>
+            ) : (
+              <Link
+                href="/checkout"
+                className="w-[55%]"
+              >
+                <button className="w-full py-3 rounded-2xl bg-black text-white font-semibold hover:bg-gray-800 transition">
+                  Checkout
+                </button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
