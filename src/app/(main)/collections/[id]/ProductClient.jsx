@@ -1,17 +1,17 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+
 import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
 import { MdLocalShipping } from "react-icons/md";
 import { GiReturnArrow } from "react-icons/gi";
-import {
-  IoMdStar,
-  IoMdStarHalf,
-  IoMdStarOutline,
-} from "react-icons/io";
+
+import { IoMdStar, IoMdStarHalf, IoMdStarOutline } from "react-icons/io";
+
+import toast from "react-hot-toast";
 
 import { useCart } from "@/context/CartContext";
 
@@ -27,12 +27,7 @@ export default function ProductClient({ initialData }) {
      CART CONTEXT
   ====================================================== */
 
-  const {
-    cart,
-    addToCart,
-    updateQty,
-    loading: cartLoading,
-  } = useCart();
+  const { cart, addToCart, updateQty, loading: cartLoading } = useCart();
 
   /* ======================================================
      STATE
@@ -41,14 +36,10 @@ export default function ProductClient({ initialData }) {
   const [quantity, setQuantity] = useState(1);
 
   const [mainImage, setMainImage] = useState(
-    product.images?.[0] ||
-      product.thumbnail ||
-      "/fallback.png",
+    product.images?.[0] || product.thumbnail || "/fallback.png",
   );
 
   const [wishlist, setWishlist] = useState([]);
-
-  const [toast, setToast] = useState(null);
 
   const [reviews, setReviews] = useState(product.reviews || []);
 
@@ -67,20 +58,14 @@ export default function ProductClient({ initialData }) {
   const productId = String(product._id);
 
   const finalPrice =
-    product.discountPrice > 0
-      ? product.discountPrice
-      : product.price;
+    product.discountPrice > 0 ? product.discountPrice : product.price;
 
   const inStock =
-    product.availabilityStatus === "In Stock" ||
-    product.stock > 0;
+    product.availabilityStatus === "In Stock" || product.stock > 0;
 
-  const isLowStock =
-    product.stock > 0 && product.stock <= 5;
+  const isLowStock = product.stock > 0 && product.stock <= 5;
 
-  const isWishlisted = wishlist.find(
-    (item) => String(item._id) === productId,
-  );
+  const isWishlisted = wishlist.find((item) => String(item._id) === productId);
 
   const cartItem = useMemo(() => {
     return cart.find((item) => {
@@ -96,10 +81,7 @@ export default function ProductClient({ initialData }) {
 
   const avgRating =
     reviews.length > 0
-      ? reviews.reduce(
-          (acc, r) => acc + (r.rating || 0),
-          0,
-        ) / reviews.length
+      ? reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviews.length
       : 0;
 
   /* ======================================================
@@ -107,23 +89,10 @@ export default function ProductClient({ initialData }) {
   ====================================================== */
 
   useEffect(() => {
-    const storedWishlist =
-      JSON.parse(localStorage.getItem("wishlist")) || [];
+    const storedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
 
     setWishlist(storedWishlist);
   }, []);
-
-  /* ======================================================
-     TOAST
-  ====================================================== */
-
-  const showToast = (msg) => {
-    setToast(msg);
-
-    setTimeout(() => {
-      setToast(null);
-    }, 2200);
-  };
 
   /* ======================================================
      STARS
@@ -150,21 +119,25 @@ export default function ProductClient({ initialData }) {
   ====================================================== */
 
   const handleAddToCart = async () => {
-    if (!inStock) return;
+    if (!inStock) {
+      toast.error("Product out of stock");
+
+      return;
+    }
 
     try {
       await addToCart(productId);
 
-      if (quantity > 1) {
+      // Extra quantity
+      if (quantity > 1 && !isAlreadyInCart) {
         for (let i = 1; i < quantity; i++) {
           await updateQty(productId, 1);
         }
       }
-
-      showToast("Added to cart 🛒");
     } catch (err) {
       console.error(err);
-      showToast("Failed to add to cart");
+
+      toast.error("Failed to add to cart");
     }
   };
 
@@ -176,23 +149,18 @@ export default function ProductClient({ initialData }) {
     let updated = [];
 
     if (isWishlisted) {
-      updated = wishlist.filter(
-        (item) => String(item._id) !== productId,
-      );
+      updated = wishlist.filter((item) => String(item._id) !== productId);
 
-      showToast("Removed from wishlist");
+      toast("Removed from wishlist");
     } else {
       updated = [...wishlist, product];
 
-      showToast("Added to wishlist ❤️");
+      toast.success("Added to wishlist ❤️");
     }
 
     setWishlist(updated);
 
-    localStorage.setItem(
-      "wishlist",
-      JSON.stringify(updated),
-    );
+    localStorage.setItem("wishlist", JSON.stringify(updated));
   };
 
   /* ======================================================
@@ -207,7 +175,8 @@ export default function ProductClient({ initialData }) {
     const rating = Number(newReview.rating);
 
     if (!name || !comment || !rating) {
-      showToast("All fields are required ⭐");
+      toast.error("All fields are required ⭐");
+
       return;
     }
 
@@ -219,21 +188,19 @@ export default function ProductClient({ initialData }) {
         email: "",
       };
 
-      const res = await fetch(
-        `/api/products/${productId}/review`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(reviewPayload),
+      const res = await fetch(`/api/products/${productId}/review`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify(reviewPayload),
+      });
 
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        showToast(data.error || "Failed to submit review");
+        toast.error(data.error || "Failed to submit review");
+
         return;
       }
 
@@ -247,10 +214,11 @@ export default function ProductClient({ initialData }) {
         comment: "",
       });
 
-      showToast("Review submitted ⭐");
+      toast.success("Review submitted ⭐");
     } catch (err) {
       console.error(err);
-      showToast("Something went wrong");
+
+      toast.error("Something went wrong");
     }
   };
 
@@ -259,11 +227,7 @@ export default function ProductClient({ initialData }) {
   ====================================================== */
 
   if (!product?._id) {
-    return (
-      <p className="text-center mt-20 text-gray-500">
-        Product not found
-      </p>
-    );
+    return <p className="text-center mt-20 text-gray-500">Product not found</p>;
   }
 
   /* ======================================================
@@ -271,27 +235,15 @@ export default function ProductClient({ initialData }) {
   ====================================================== */
 
   return (
-    <section className="max-w-7xl mx-auto px-6 md:px-12 py-20">
-      {/* TOAST */}
-      {toast && (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[999] bg-black text-white px-6 py-3 rounded-full shadow-2xl">
-          {toast}
-        </div>
-      )}
-
+    <section className="max-w-7xl mx-auto px-6 md:px-12 py-10">
       {/* BREADCRUMB */}
-      <div className="text-sm text-gray-500 mb-6">
+      <div className="text-sm text-gray-500 mb-4">
         <Link href="/">Home</Link> &gt;{" "}
-        <Link href="/collections">
-          Collections
-        </Link>{" "}
-        &gt;{" "}
-        <span className="text-black font-medium">
-          {product.title}
-        </span>
+        <Link href="/collections">Collections</Link> &gt;{" "}
+        <span className="text-black font-medium">{product.title}</span>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-12">
+      <div className="grid md:grid-cols-2 gap-6 md:gap-12">
         {/* ======================================================
             IMAGES
         ====================================================== */}
@@ -391,9 +343,7 @@ export default function ProductClient({ initialData }) {
           <div className="flex items-center gap-3 mb-8 flex-wrap">
             <span
               className={`w-3 h-3 rounded-full ${
-                inStock
-                  ? "bg-green-500"
-                  : "bg-red-500"
+                inStock ? "bg-green-500" : "bg-red-500"
               }`}
             />
 
@@ -421,11 +371,7 @@ export default function ProductClient({ initialData }) {
               <div className="flex items-center border border-gray-300 rounded-lg shadow-sm overflow-hidden">
                 <button
                   type="button"
-                  onClick={() =>
-                    setQuantity((q) =>
-                      Math.max(1, q - 1),
-                    )
-                  }
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   className="px-5 py-3 hover:bg-gray-50 transition"
                 >
                   −
@@ -438,12 +384,7 @@ export default function ProductClient({ initialData }) {
                 <button
                   type="button"
                   onClick={() =>
-                    setQuantity((q) =>
-                      Math.min(
-                        product.stock || 999,
-                        q + 1,
-                      ),
-                    )
+                    setQuantity((q) => Math.min(product.stock || 999, q + 1))
                   }
                   className="px-5 py-3 hover:bg-gray-50 transition"
                 >
@@ -484,9 +425,7 @@ export default function ProductClient({ initialData }) {
               onClick={toggleWishlist}
               className="w-full py-4 border border-gray-300 rounded-lg font-semibold hover:bg-black hover:text-white transition flex justify-center items-center gap-2"
             >
-              {isWishlisted
-                ? "❤️ SAVED TO WISHLIST"
-                : "♡ SAVE TO WISHLIST"}
+              {isWishlisted ? "❤️ SAVED TO WISHLIST" : "♡ SAVE TO WISHLIST"}
             </button>
           </div>
 
@@ -495,46 +434,36 @@ export default function ProductClient({ initialData }) {
             <div className="border border-gray-100 p-5 bg-gray-50/50 rounded-xl flex flex-col items-center text-center">
               <MdLocalShipping className="text-3xl mb-2 text-gray-700" />
 
-              <p className="font-bold text-xs uppercase mb-1">
-                Shipping
-              </p>
+              <p className="font-bold text-xs uppercase mb-1">Shipping</p>
 
               <p className="text-xs text-gray-500">
-                {product.shippingInformation ||
-                  "Free standard shipping"}
+                {product.shippingInformation || "Free standard shipping"}
               </p>
             </div>
 
             <div className="border border-gray-100 p-5 bg-gray-50/50 rounded-xl flex flex-col items-center text-center">
               <GiReturnArrow className="text-3xl mb-2 text-gray-700" />
 
-              <p className="font-bold text-xs uppercase mb-1">
-                Returns
-              </p>
+              <p className="font-bold text-xs uppercase mb-1">Returns</p>
 
               <p className="text-xs text-gray-500">
-                {product.returnPolicy ||
-                  "30-day return policy"}
+                {product.returnPolicy || "30-day return policy"}
               </p>
             </div>
           </div>
         </div>
       </div>
-
       {/* ======================================================
           REVIEWS
       ====================================================== */}
 
-      <div className="mt-32 border-t border-gray-100 pt-20">
+      <div className="mt-32 border-t border-gray-100">
         <div className="flex justify-between items-end mb-10 flex-wrap gap-4">
           <div>
-            <h2 className="text-3xl font-bold mb-2">
-              Verified Reviews
-            </h2>
+            <h2 className="text-3xl font-bold mb-2">Verified Reviews</h2>
 
             <p className="text-gray-500">
-              What our customers are saying about
-              this product
+              What our customers are saying about this product
             </p>
           </div>
 
@@ -554,24 +483,19 @@ export default function ProductClient({ initialData }) {
                 className="p-8 rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition"
               >
                 <div className="flex justify-between mb-4">
-                  <span className="font-bold text-lg">
-                    {r.name}
-                  </span>
+                  <span className="font-bold text-lg">{r.name}</span>
 
                   <div className="text-yellow-500 flex">
                     {renderStars(r.rating)}
                   </div>
                 </div>
 
-                <p className="text-gray-600 italic">
-                  "{r.comment}"
-                </p>
+                <p className="text-gray-600 italic">"{r.comment}"</p>
               </div>
             ))
           ) : (
             <p className="text-gray-400">
-              No reviews yet. Be the first to
-              write one!
+              No reviews yet. Be the first to write one!
             </p>
           )}
         </div>
@@ -582,38 +506,26 @@ export default function ProductClient({ initialData }) {
       ====================================================== */}
 
       <div className="mt-20">
-        <h2 className="text-2xl font-semibold mb-6">
-          You May Also Like
-        </h2>
+        <h2 className="text-2xl font-semibold mb-6">You May Also Like</h2>
 
         {related.length === 0 ? (
-          <p className="text-gray-400">
-            No related products found.
-          </p>
+          <p className="text-gray-400">No related products found.</p>
         ) : (
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
             {related.map((p) => {
-              const discounted = p.discountPercentage
-                ? (p.price *
-                    (100 - p.discountPercentage)) /
-                  100
-                : p.price;
+              const finalRelatedPrice =
+                p.discountPrice > 0 ? p.discountPrice : p.price;
 
               return (
-                <Link
-                  key={p._id}
-                  href={`/collections/${p._id}`}
-                >
+                <Link key={p._id} href={`/collections/${p._id}`}>
                   <motion.div
                     whileHover={{ y: -6 }}
                     className="border border-gray-200 rounded-xl overflow-hidden bg-white transition hover:shadow-md cursor-pointer"
                   >
+                    {/* IMAGE */}
                     <div className="relative h-48 w-full bg-white border-b border-gray-100 overflow-hidden">
                       <Image
-                        src={
-                          p.thumbnail ||
-                          "/fallback.png"
-                        }
+                        src={p.images?.[0] || p.thumbnail || "/fallback.png"}
                         alt={p.title}
                         fill
                         className="object-cover"
@@ -622,25 +534,26 @@ export default function ProductClient({ initialData }) {
                       />
                     </div>
 
+                    {/* CONTENT */}
                     <div className="p-4">
                       <p className="text-sm font-medium line-clamp-2 mb-2">
                         {p.title}
                       </p>
 
-                      <div className="flex gap-2 text-sm items-center">
-                        {p.discountPercentage && (
-                          <span className="line-through text-gray-400">
-                            ৳{p.price}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {p.discountPrice > 0 && (
+                          <span className="line-through text-gray-400 text-sm">
+                            ৳{Number(p.price || 0).toFixed(2)}
                           </span>
                         )}
 
-                        <span className="font-semibold">
-                          ৳
-                          {Number(
-                            discounted || 0,
-                          ).toFixed(2)}
+                        <span className="font-semibold text-black">
+                          ৳{Number(finalRelatedPrice || 0).toFixed(2)}
                         </span>
                       </div>
+
+                      {/* CATEGORY */}
+                      <p className="text-xs text-gray-400 mt-2">{p.category}</p>
                     </div>
                   </motion.div>
                 </Link>
@@ -661,9 +574,7 @@ export default function ProductClient({ initialData }) {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl"
           >
-            <h3 className="text-2xl font-bold mb-6">
-              Share Your Thoughts
-            </h3>
+            <h3 className="text-2xl font-bold mb-6">Share Your Thoughts</h3>
 
             <input
               placeholder="Full Name"
@@ -688,9 +599,7 @@ export default function ProductClient({ initialData }) {
                     })
                   }
                   className={`text-3xl ${
-                    s <= newReview.rating
-                      ? "text-yellow-500"
-                      : "text-gray-200"
+                    s <= newReview.rating ? "text-yellow-500" : "text-gray-200"
                   }`}
                 >
                   ★
@@ -713,9 +622,7 @@ export default function ProductClient({ initialData }) {
 
             <div className="flex gap-3">
               <button
-                onClick={() =>
-                  setShowReviewModal(false)
-                }
+                onClick={() => setShowReviewModal(false)}
                 className="flex-1 py-3 font-bold text-gray-500"
               >
                 Cancel

@@ -19,7 +19,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <CartProvider>{children}</CartProvider>
         </AuthProvider>
-        <Toaster position="top-right" />
+       <Toaster position="top-center" />
       </body>
     </html>
   );

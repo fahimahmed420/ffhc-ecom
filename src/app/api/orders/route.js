@@ -288,7 +288,7 @@ export async function POST(req) {
 
       orderId,
 
-      message: "Order placed successfully",
+      message: "Order placed successfully, plz check email 🎉",
     });
   } catch (err) {
     console.error("ORDER ERROR:", err);

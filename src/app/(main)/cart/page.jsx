@@ -12,12 +12,7 @@ import { useCart } from "@/context/CartContext";
 export default function CartPage() {
   const { user } = useAuth();
 
-  const {
-    cart,
-    loading,
-    updateQty,
-    removeItem,
-  } = useCart();
+  const { cart, loading, updateQty, removeItem } = useCart();
 
   const [products, setProducts] = useState([]);
 
@@ -41,14 +36,10 @@ export default function CartPage() {
     const fetchProducts = async () => {
       try {
         const ids = cart.map((item) =>
-          typeof item === "string"
-            ? item
-            : item.id,
+          typeof item === "string" ? item : item.id,
         );
 
-        const res = await fetch(
-          `/api/products?ids=${ids.join(",")}`,
-        );
+        const res = await fetch(`/api/products?ids=${ids.join(",")}`);
 
         const data = await res.json();
 
@@ -59,23 +50,7 @@ export default function CartPage() {
     };
 
     fetchProducts();
-  }, [cart, user]);
-
-  /* ======================================================
-     HELPERS
-  ====================================================== */
-
-  const getQty = (id) => {
-    const item = cart.find((c) =>
-      typeof c === "string"
-        ? c === id
-        : c.id === id,
-    );
-
-    return typeof item === "string"
-      ? 1
-      : item?.qty || 1;
-  };
+  }, [cart, user?.uid]);
 
   /* ======================================================
      MERGE PRODUCTS + CART
@@ -83,35 +58,19 @@ export default function CartPage() {
 
   const merged = useMemo(() => {
     return products.map((p) => {
-      const qty = getQty(String(p._id));
+      const item = cart.find((c) =>
+        typeof c === "string" ? c === String(p._id) : c.id === String(p._id),
+      );
 
-      const discountedPrice =
-        p.discountPrice > 0
-          ? p.discountPrice
-          : p.price;
+      const qty = typeof item === "string" ? 1 : item?.qty || 1;
 
       return {
         ...p,
         qty,
-        discountedPrice,
+        discountedPrice: p.discountPrice > 0 ? p.discountPrice : p.price,
       };
     });
   }, [products, cart]);
-
-  /* ======================================================
-     AUTO SELECT ALL
-  ====================================================== */
-
-  useEffect(() => {
-    if (
-      merged.length > 0 &&
-      selectedItems.length === 0
-    ) {
-      setSelectedItems(
-        merged.map((p) => String(p._id)),
-      );
-    }
-  }, [merged]);
 
   /* ======================================================
      SELECT
@@ -119,23 +78,18 @@ export default function CartPage() {
 
   const toggleSelect = (id) => {
     setSelectedItems((prev) =>
-      prev.includes(id)
-        ? prev.filter((item) => item !== id)
-        : [...prev, id],
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
   const allSelected =
-    merged.length > 0 &&
-    selectedItems.length === merged.length;
+    merged.length > 0 && selectedItems.length === merged.length;
 
   const toggleSelectAll = () => {
     if (allSelected) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(
-        merged.map((p) => String(p._id)),
-      );
+      setSelectedItems(merged.map((p) => String(p._id)));
     }
   };
 
@@ -146,9 +100,7 @@ export default function CartPage() {
   const handleRemove = async (id) => {
     await removeItem(id);
 
-    setSelectedItems((prev) =>
-      prev.filter((itemId) => itemId !== id),
-    );
+    setSelectedItems((prev) => prev.filter((itemId) => itemId !== id));
   };
 
   /* ======================================================
@@ -156,16 +108,11 @@ export default function CartPage() {
   ====================================================== */
 
   const subtotal = merged.reduce((acc, item) => {
-    if (
-      !selectedItems.includes(String(item._id))
-    ) {
+    if (!selectedItems.includes(String(item._id))) {
       return acc;
     }
 
-    return (
-      acc +
-      item.discountedPrice * item.qty
-    );
+    return acc + item.discountedPrice * item.qty;
   }, 0);
 
   /* ======================================================
@@ -196,8 +143,7 @@ export default function CartPage() {
         </h2>
 
         <p className="text-gray-500 mb-8 max-w-md">
-          Discover premium products and add
-          your favorites to the cart.
+          Discover premium products and add your favorites to the cart.
         </p>
 
         <Link
@@ -240,11 +186,8 @@ export default function CartPage() {
                 : "border-gray-300 bg-white"
             }`}
           >
-            {allSelected && (
-              <Check size={14} />
-            )}
+            {allSelected && <Check size={14} />}
           </div>
-
           Select All
         </button>
       </div>
@@ -255,8 +198,7 @@ export default function CartPage() {
           {merged.map((item) => {
             const itemId = String(item._id);
 
-            const isSelected =
-              selectedItems.includes(itemId);
+            const isSelected = selectedItems.includes(itemId);
 
             return (
               <motion.div
@@ -273,18 +215,14 @@ export default function CartPage() {
                   <div className="flex gap-3 sm:gap-5">
                     {/* CHECKBOX */}
                     <button
-                      onClick={() =>
-                        toggleSelect(itemId)
-                      }
+                      onClick={() => toggleSelect(itemId)}
                       className={`mt-1 min-w-5 h-5 rounded border flex items-center justify-center transition ${
                         isSelected
                           ? "bg-black border-black text-white"
                           : "border-gray-300 bg-white"
                       }`}
                     >
-                      {isSelected && (
-                        <Check size={13} />
-                      )}
+                      {isSelected && <Check size={13} />}
                     </button>
 
                     {/* IMAGE */}
@@ -294,9 +232,7 @@ export default function CartPage() {
                     >
                       <Image
                         src={
-                          item.images?.[0] ||
-                          item.thumbnail ||
-                          "/fallback.png"
+                          item.images?.[0] || item.thumbnail || "/fallback.png"
                         }
                         alt={item.title}
                         fill
@@ -306,9 +242,7 @@ export default function CartPage() {
 
                     {/* CONTENT */}
                     <div className="flex-1 min-w-0">
-                      <Link
-                        href={`/collections/${itemId}`}
-                      >
+                      <Link href={`/collections/${itemId}`}>
                         <h3 className="font-semibold text-sm sm:text-lg line-clamp-2 hover:underline">
                           {item.title}
                         </h3>
@@ -321,14 +255,10 @@ export default function CartPage() {
                       {/* PRICE */}
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <span className="text-xl sm:text-2xl font-black">
-                          ৳
-                          {item.discountedPrice.toFixed(
-                            2,
-                          )}
+                          ৳{item.discountedPrice.toFixed(2)}
                         </span>
 
-                        {item.discountPrice >
-                          0 && (
+                        {item.discountPrice > 0 && (
                           <span className="line-through text-gray-400 text-sm">
                             ৳{item.price}
                           </span>
@@ -340,12 +270,7 @@ export default function CartPage() {
                         {/* QTY */}
                         <div className="flex items-center border border-gray-300 rounded-full overflow-hidden">
                           <button
-                            onClick={() =>
-                              updateQty(
-                                itemId,
-                                -1,
-                              )
-                            }
+                            onClick={() => updateQty(itemId, -1)}
                             className="w-9 h-9 sm:w-10 sm:h-10 hover:bg-gray-100 transition text-lg"
                           >
                             -
@@ -357,26 +282,16 @@ export default function CartPage() {
 
                           <button
                             onClick={() => {
-                              if (
-                                item.qty <
-                                item.stock
-                              ) {
-                                updateQty(
-                                  itemId,
-                                  1,
-                                );
+                              if (item.qty < item.stock) {
+                                updateQty(itemId, 1);
                               }
                             }}
                             className={`w-9 h-9 sm:w-10 sm:h-10 transition text-lg ${
-                              item.qty >=
-                              item.stock
+                              item.qty >= item.stock
                                 ? "opacity-40 cursor-not-allowed"
                                 : "hover:bg-gray-100"
                             }`}
-                            disabled={
-                              item.qty >=
-                              item.stock
-                            }
+                            disabled={item.qty >= item.stock}
                           >
                             +
                           </button>
@@ -384,11 +299,7 @@ export default function CartPage() {
 
                         {/* REMOVE */}
                         <button
-                          onClick={() =>
-                            handleRemove(
-                              itemId,
-                            )
-                          }
+                          onClick={() => handleRemove(itemId)}
                           className="text-sm text-red-500 hover:underline"
                         >
                           Remove
@@ -408,11 +319,7 @@ export default function CartPage() {
                     </div>
 
                     <p className="text-lg sm:text-2xl font-black">
-                      ৳
-                      {(
-                        item.discountedPrice *
-                        item.qty
-                      ).toFixed(2)}
+                      ৳{(item.discountedPrice * item.qty).toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -424,22 +331,16 @@ export default function CartPage() {
         {/* DESKTOP SUMMARY */}
         <div className="hidden lg:block sticky top-24 h-fit">
           <div className="bg-white border border-gray-200 rounded-3xl p-7 shadow-xl">
-            <h2 className="text-2xl font-bold mb-8">
-              Order Summary
-            </h2>
+            <h2 className="text-2xl font-bold mb-8">Order Summary</h2>
 
             <div className="flex justify-between mb-4 text-gray-600">
               <span>Selected Items</span>
 
-              <span className="font-semibold">
-                {selectedItems.length}
-              </span>
+              <span className="font-semibold">{selectedItems.length}</span>
             </div>
 
             <div className="flex justify-between items-end border-t border-b py-6 mb-6">
-              <span className="text-lg font-medium">
-                Subtotal
-              </span>
+              <span className="text-lg font-medium">Subtotal</span>
 
               <span className="text-4xl font-black tracking-tight">
                 ৳{subtotal.toFixed(2)}
@@ -454,7 +355,7 @@ export default function CartPage() {
                 Proceed to Checkout →
               </button>
             ) : (
-              <Link href="/checkout">
+              <Link href={`/checkout?items=${selectedItems.join(",")}`}>
                 <button className="w-full py-4 rounded-2xl bg-black text-white font-semibold hover:bg-gray-800 transition">
                   Proceed to Checkout →
                 </button>
@@ -478,8 +379,7 @@ export default function CartPage() {
             {/* LEFT */}
             <div className="min-w-0">
               <p className="text-xs text-gray-500">
-                {selectedItems.length} item
-                selected
+                {selectedItems.length} item selected
               </p>
 
               <h3 className="text-2xl font-black truncate">
@@ -496,10 +396,7 @@ export default function CartPage() {
                 Checkout
               </button>
             ) : (
-              <Link
-                href="/checkout"
-                className="w-[55%]"
-              >
+              <Link href={`/checkout?items=${selectedItems.join(",")}`} className="w-[55%]">
                 <button className="w-full py-3 rounded-2xl bg-black text-white font-semibold hover:bg-gray-800 transition">
                   Checkout
                 </button>

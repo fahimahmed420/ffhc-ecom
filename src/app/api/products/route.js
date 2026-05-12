@@ -79,7 +79,7 @@ export async function GET(req) {
     }
 
     // ======================================================
-    // ADVANCED SEARCH
+    // SEARCH
     // ======================================================
     if (search) {
       query.$or = [
@@ -113,23 +113,23 @@ export async function GET(req) {
 
     switch (sort) {
       case "asc":
-        sortOption = { price: 1 };
+        sortOption = { price: 1, _id: 1 };
         break;
 
       case "desc":
-        sortOption = { price: -1 };
+        sortOption = { price: -1, _id: -1 };
         break;
 
       case "rating":
-        sortOption = { rating: -1 };
+        sortOption = { rating: -1, _id: -1 };
         break;
 
       case "popular":
-        sortOption = { reviewsCount: -1 };
+        sortOption = { reviewsCount: -1, _id: -1 };
         break;
 
       default:
-        sortOption = { createdAt: -1 };
+        sortOption = { createdAt: -1, _id: -1 };
     }
 
     // ======================================================
@@ -154,17 +154,10 @@ export async function GET(req) {
       .sort(sortOption);
 
     // ======================================================
-    // SEARCH LIMIT
-    // ======================================================
-    if (search) {
-      cursor = cursor.limit(8);
-    }
-
-    // ======================================================
     // PAGINATION
     // ======================================================
-    if (!all && !search) {
-      cursor = cursor.skip(page * limit).limit(limit);
+    if (!all) {
+      cursor = cursor.skip(page * limit).limit(limit + 1);
     }
 
     // ======================================================
@@ -173,14 +166,16 @@ export async function GET(req) {
     const products = await cursor.toArray();
 
     // ======================================================
-    // COUNT
+    // HAS MORE
     // ======================================================
-    const total = await collection.countDocuments(query);
+    const hasMore = !all && products.length > limit;
+
+    const slicedProducts = hasMore ? products.slice(0, limit) : products;
 
     // ======================================================
     // FORMAT
     // ======================================================
-    const formatted = products.map((p) => ({
+    const formatted = slicedProducts.map((p) => ({
       ...p,
       _id: p._id.toString(),
     }));
@@ -192,20 +187,16 @@ export async function GET(req) {
       {
         success: true,
         products: formatted,
-        total,
         page: all ? null : page,
         limit: all ? null : limit,
-
-        hasMore: all ? false : page * limit + products.length < total,
+        hasMore,
       },
       {
         status: 200,
 
         headers: {
-          // ======================================================
-          // CACHE OPTIMIZATION
-          // ======================================================
-          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+          "Cache-Control":
+            "public, s-maxage=60, stale-while-revalidate=120",
         },
       },
     );
@@ -256,7 +247,7 @@ export async function POST(req) {
     const collection = db.collection("products");
 
     // ======================================================
-    // ✅ NORMALIZE CATEGORY FUNCTION
+    // NORMALIZE CATEGORY
     // ======================================================
     const normalizeCategory = (cat) => {
       if (!cat) return "";
@@ -292,7 +283,8 @@ export async function POST(req) {
 
       thumbnail: body.thumbnail || body.images?.[0] || "",
 
-      availabilityStatus: Number(body.stock) > 0 ? "In Stock" : "Out of Stock",
+      availabilityStatus:
+        Number(body.stock) > 0 ? "In Stock" : "Out of Stock",
 
       reviews: [],
 

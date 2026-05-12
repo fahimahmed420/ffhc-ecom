@@ -125,7 +125,7 @@ export default function DashboardLayout({ children }) {
                 </button>
 
                 {open && (
-                  <div className="absolute right-0 mt-3 w-40 bg-white border border-gray-200 shadow-sm text-[11px] tracking-widest">
+                  <div className="absolute z-50 right-0 mt-3 w-40 bg-white border border-gray-200 shadow-sm text-[11px] tracking-widest">
                     {/* 🔥 Role label */}
                     <p className="px-4 py-2 text-gray-400 text-[10px]">
                       {role?.toUpperCase()}
@@ -186,7 +186,7 @@ export default function DashboardLayout({ children }) {
           </div>
 
           {/* Links */}
-          <div className="flex flex-col gap-6 text-[12px] tracking-widest">
+          <div className="flex flex-col gap-6 text-[12px] tracking-widest ">
             {navItems.map((item) => {
               const isActive = pathname === item.path;
 
@@ -196,7 +196,7 @@ export default function DashboardLayout({ children }) {
                   href={item.path}
                   onClick={() => setMobileMenu(false)}
                   className={`${
-                    isActive ? "text-black" : "text-gray-500"
+                    isActive ? "text-black" : "text-gray-500 hover:text-gray-900"
                   } flex items-center gap-2`}
                 >
                   {item.icon}
@@ -210,7 +210,7 @@ export default function DashboardLayout({ children }) {
                 <Link
                   href="/dashboard/profile"
                   onClick={() => setMobileMenu(false)}
-                  className="flex items-center gap-2 text-gray-500"
+                  className="flex items-center gap-2 text-gray-500 hover:text-gray-900"
                 >
                   <User size={14} />
                   PROFILE
@@ -218,7 +218,7 @@ export default function DashboardLayout({ children }) {
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 text-left text-gray-500"
+                  className="flex items-center gap-2 text-left text-gray-500 hover:text-gray-900"
                 >
                   <LogOut size={14} />
                   LOGOUT
@@ -227,7 +227,7 @@ export default function DashboardLayout({ children }) {
             ) : (
               <button
                 onClick={() => router.push("/auth")}
-                className="flex items-center gap-2 text-gray-500"
+                className="flex items-center gap-2 text-gray-500 "
               >
                 <User size={14} />
                 LOGIN
