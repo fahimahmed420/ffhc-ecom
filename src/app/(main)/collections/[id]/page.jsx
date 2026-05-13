@@ -1,29 +1,7 @@
 import ProductClient from "./ProductClient";
+import { getProductData } from "@/lib/getProduct";
 
 export const revalidate = 60;
-
-async function getProduct(id) {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/products/${id}`,
-      {
-        cache: "no-store", // safer for debugging
-      }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok || !data?.product) return null;
-
-    return {
-      product: data.product,
-      related: data.related || [],
-    };
-  } catch (err) {
-    console.error("Fetch error:", err);
-    return null;
-  }
-}
 
 export default async function Page({ params }) {
   const { id } = await params;
@@ -36,7 +14,7 @@ export default async function Page({ params }) {
     );
   }
 
-  const data = await getProduct(id);
+  const data = await getProductData(id);
 
   if (!data?.product) {
     return (
