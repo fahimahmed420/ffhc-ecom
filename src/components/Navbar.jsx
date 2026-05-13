@@ -401,342 +401,338 @@ export default function Navbar() {
                   initial={{
                     width: 0,
                     opacity: 0,
+                    scale: 0.96,
                   }}
                   animate={{
                     width: 320,
                     opacity: 1,
+                    scale: 1,
                   }}
                   exit={{
                     width: 0,
                     opacity: 0,
+                    scale: 0.96,
                   }}
                   transition={{
                     duration: 0.25,
                   }}
-                  className="
-          flex items-center gap-2
-          overflow-hidden
-        "
+                  className="relative origin-left"
+                  style={{
+                    transformOrigin: "left center",
+                  }}
                 >
-                  {/* CLOSE BUTTON */}
+                  {/* INPUT */}
 
-                  <button
-                    onClick={closeSearch}
-                    className="
-            flex-shrink-0
-            w-9 h-9
-            rounded-full
-            flex items-center justify-center
-            hover:bg-black/5
-            transition
-          "
-                  >
-                    <X size={18} className="hover:rotate-90 transition" />
-                  </button>
+                  <input
+                    ref={inputRef}
+                    autoFocus
+                    type="text"
+                    placeholder="Search products..."
+                    value={query}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
 
-                  {/* INPUT + DROPDOWN */}
+                      setActiveIndex(-1);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowDown") {
+                        setActiveIndex((prev) =>
+                          prev < results.length - 1 ? prev + 1 : prev,
+                        );
+                      }
 
-                  <div className="relative w-[270px]">
-                    <input
-                      ref={inputRef}
-                      autoFocus
-                      type="text"
-                      placeholder="Search products..."
-                      value={query}
-                      onChange={(e) => {
-                        setQuery(e.target.value);
+                      if (e.key === "ArrowUp") {
+                        setActiveIndex((prev) => (prev > 0 ? prev - 1 : 0));
+                      }
 
-                        setActiveIndex(-1);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "ArrowDown") {
-                          setActiveIndex((prev) =>
-                            prev < results.length - 1 ? prev + 1 : prev,
+                      if (e.key === "Enter") {
+                        if (activeIndex >= 0) {
+                          router.push(
+                            `/collections/${results[activeIndex]._id}`,
                           );
+
+                          closeSearch();
+
+                          return;
                         }
 
-                        if (e.key === "ArrowUp") {
-                          setActiveIndex((prev) => (prev > 0 ? prev - 1 : 0));
-                        }
-
-                        if (e.key === "Enter") {
-                          if (activeIndex >= 0) {
-                            router.push(
-                              `/collections/${results[activeIndex]._id}`,
-                            );
-
-                            closeSearch();
-
-                            return;
-                          }
-
-                          handleSearch();
-                        }
-                      }}
-                      className="
-              w-full
-              border border-black/10
-              bg-white/90
-              backdrop-blur-xl
-              px-4 py-2.5
-              rounded-xl
-              text-sm
-              outline-none
-              shadow-xl
-            "
-                    />
-
-                    {/* ====================================================== */}
-                    {/* RECENT SEARCHES */}
-                    {/* ====================================================== */}
-
-                    {!query && recentSearches.length > 0 && (
-                      <div
-                        className="
-                  absolute top-14 left-0 w-full
-                  bg-white/95
-                  backdrop-blur-xl
-                  border border-black/10
-                  rounded-2xl
-                  shadow-2xl
-                  p-4
-                  z-50
-                "
-                      >
-                        <p
-                          className="
-                    text-xs
-                    text-black/40
-                    mb-3
-                  "
-                        >
-                          Recent Searches
-                        </p>
-
-                        <div className="flex flex-wrap gap-2">
-                          {recentSearches.map((item) => (
-                            <button
-                              key={item}
-                              onClick={() => handleSearch(item)}
-                              className="
-                        flex items-center gap-1
-                        px-3 py-1.5
-                        rounded-full
-                        bg-black/5
-                        hover:bg-black
-                        hover:text-white
-                        text-xs
-                        transition
-                      "
-                            >
-                              <Clock3 size={12} />
-
-                              {item}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ====================================================== */}
-                    {/* LOADING */}
-                    {/* ====================================================== */}
-
-                    {loading && (
-                      <div
-                        className="
-                absolute top-14 left-0 w-full
-                bg-white rounded-2xl
-                border border-black/10
-                p-3 space-y-3
-                shadow-2xl
-                z-50
-              "
-                      >
-                        {[...Array(4)].map((_, i) => (
-                          <div
-                            key={i}
-                            className="
-                    flex items-center gap-3
-                    animate-pulse
-                  "
-                          >
-                            <div
-                              className="
-                      w-14 h-14 rounded-lg
-                      bg-black/10
+                        handleSearch();
+                      }
+                    }}
+                    className="
+                      w-full
+                      border border-black/10
+                      bg-white/90
+                      backdrop-blur-xl
+                      px-3 py-2 
+                      rounded-xl
+                      text-sm
+                      outline-none
+                      shadow-xl
                     "
-                            />
+                  />
 
-                            <div className="flex-1 space-y-2">
-                              <div
-                                className="
-                        h-3 rounded
-                        bg-black/10
-                        w-2/3
-                      "
-                              />
+                  {/* ====================================================== */}
+                  {/* RECENT SEARCHES */}
+                  {/* ====================================================== */}
 
-                              <div
-                                className="
-                        h-2 rounded
-                        bg-black/10
-                        w-1/3
-                      "
-                              />
-                            </div>
-                          </div>
+                  {!query && recentSearches.length > 0 && (
+                    <div
+                      className="
+                          absolute top-14 left-0 w-full
+                          bg-white/95
+                          backdrop-blur-xl
+                          border border-black/10
+                          rounded-2xl
+                          shadow-2xl
+                          p-4
+                          z-50
+                        "
+                    >
+                      <p
+                        className="
+                            text-xs
+                            text-black/40
+                            mb-3
+                          "
+                      >
+                        Recent Searches
+                      </p>
+
+                      <div className="flex flex-wrap gap-2">
+                        {recentSearches.map((item) => (
+                          <button
+                            key={item}
+                            onClick={() => handleSearch(item)}
+                            className="
+                                  flex items-center gap-1
+                                  px-3 py-1.5
+                                  rounded-full
+                                  bg-black/5
+                                  hover:bg-black
+                                  hover:text-white
+                                  text-xs
+                                  transition
+                                "
+                          >
+                            <Clock3 size={12} />
+
+                            {item}
+                          </button>
                         ))}
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {/* ====================================================== */}
-                    {/* RESULTS */}
-                    {/* ====================================================== */}
+                  {/* ====================================================== */}
+                  {/* LOADING */}
+                  {/* ====================================================== */}
 
-                    <AnimatePresence>
-                      {!loading && results.length > 0 && (
-                        <motion.div
-                          initial={{
-                            opacity: 0,
-                            y: 10,
-                          }}
-                          animate={{
-                            opacity: 1,
-                            y: 0,
-                          }}
-                          exit={{
-                            opacity: 0,
-                            y: 10,
-                          }}
+                  {loading && (
+                    <div
+                      className="
+                        absolute top-14 left-0 w-full
+                        bg-white rounded-2xl
+                        border border-black/10
+                        p-3 space-y-3
+                        shadow-2xl
+                        z-50
+                      "
+                    >
+                      {[...Array(4)].map((_, i) => (
+                        <div
+                          key={i}
                           className="
-                    absolute top-14 left-0 w-full
-                    bg-white/95
-                    backdrop-blur-xl
-                    border border-black/10
-                    rounded-2xl
-                    shadow-2xl
-                    overflow-hidden
-                    z-50
-                  "
-                        >
-                          {results.map((product, index) => (
-                            <Link
-                              key={product._id}
-                              href={`/collections/${product._id}`}
-                              className={`
-                          flex items-center gap-3
-                          p-3 transition
-                          ${
-                            activeIndex === index
-                              ? "bg-black text-white"
-                              : "hover:bg-black/5"
-                          }
-                        `}
-                              onClick={() => closeSearch()}
-                            >
-                              <Image
-                                src={product.thumbnail}
-                                alt={product.title}
-                                width={56}
-                                height={56}
-                                className="
-                            rounded-lg
-                            object-cover
-                          "
-                                unoptimized
-                              />
-
-                              <div className="flex-1 min-w-0">
-                                <h4
-                                  className="
-                              text-sm
-                              font-medium
-                              truncate
+                              flex items-center gap-3
+                              animate-pulse
                             "
-                                >
-                                  {product.title}
-                                </h4>
-
-                                <p
-                                  className={`
-                              text-xs
-                              ${
-                                activeIndex === index
-                                  ? "text-white/70"
-                                  : "text-black/50"
-                              }
-                            `}
-                                >
-                                  {product.category}
-                                </p>
-                              </div>
-
-                              <p className="text-sm font-semibold">
-                                ${product.price}
-                              </p>
-                            </Link>
-                          ))}
-
-                          <button
-                            onClick={() => handleSearch()}
+                        >
+                          <div
                             className="
-                      w-full text-center
-                      py-3 text-sm
-                      border-t border-black/10
-                      hover:bg-black
-                      hover:text-white
-                      transition
-                    "
-                          >
-                            View All Results
-                          </button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                                w-14 h-14 rounded-lg
+                                bg-black/10
+                              "
+                          />
 
-                    {/* ====================================================== */}
-                    {/* EMPTY */}
-                    {/* ====================================================== */}
+                          <div className="flex-1 space-y-2">
+                            <div
+                              className="
+                                  h-3 rounded
+                                  bg-black/10
+                                  w-2/3
+                                "
+                            />
 
-                    {query.trim() && !loading && results.length === 0 && (
-                      <div
+                            <div
+                              className="
+                                  h-2 rounded
+                                  bg-black/10
+                                  w-1/3
+                                "
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ====================================================== */}
+                  {/* RESULTS */}
+                  {/* ====================================================== */}
+
+                  <AnimatePresence>
+                    {!loading && results.length > 0 && (
+                      <motion.div
+                        initial={{
+                          opacity: 0,
+                          y: 10,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                        }}
+                        exit={{
+                          opacity: 0,
+                          y: 10,
+                        }}
                         className="
-                  absolute top-14 left-0 w-full
-                  bg-white
-                  border border-black/10
-                  rounded-2xl
-                  shadow-2xl
-                  p-6
-                  text-center
-                  text-sm
-                  text-black/50
-                  z-50
-                "
+                            absolute top-14 left-0 w-full
+                            bg-white/95
+                            backdrop-blur-xl
+                            border border-black/10
+                            rounded-2xl
+                            shadow-2xl
+                            overflow-hidden
+                            z-50
+                          "
                       >
-                        No products found
-                      </div>
+                        {results.map((product, index) => (
+                          <Link
+                            key={product._id}
+                            href={`/collections/${product._id}`}
+                            className={`
+                                  flex items-center gap-3
+                                  p-3 transition
+                                  ${
+                                    activeIndex === index
+                                      ? "bg-black text-white"
+                                      : "hover:bg-black/5"
+                                  }
+                                `}
+                            onClick={() => closeSearch()}
+                          >
+                            <Image
+                              src={product.thumbnail}
+                              alt={product.title}
+                              width={56}
+                              height={56}
+                              className="
+                                    rounded-lg
+                                    object-cover
+                                  "
+                              unoptimized
+                            />
+
+                            <div className="flex-1 min-w-0">
+                              <h4
+                                className="
+                                      text-sm
+                                      font-medium
+                                      truncate
+                                    "
+                              >
+                                {product.title}
+                              </h4>
+
+                              <p
+                                className={`
+                                      text-xs
+                                      ${
+                                        activeIndex === index
+                                          ? "text-white/70"
+                                          : "text-black/50"
+                                      }
+                                    `}
+                              >
+                                {product.category}
+                              </p>
+                            </div>
+
+                            <p className="text-sm font-semibold">
+                              ${product.price}
+                            </p>
+                          </Link>
+                        ))}
+
+                        {/* VIEW ALL */}
+
+                        <button
+                          onClick={() => handleSearch()}
+                          className="
+                              w-full text-center
+                              py-3 text-sm
+                              border-t border-black/10
+                              hover:bg-black
+                              hover:text-white
+                              transition
+                            "
+                        >
+                          View All Results
+                        </button>
+                      </motion.div>
                     )}
-                  </div>
+                  </AnimatePresence>
+
+                  {/* ====================================================== */}
+                  {/* EMPTY */}
+                  {/* ====================================================== */}
+
+                  {query.trim() && !loading && results.length === 0 && (
+                    <div
+                      className="
+                          absolute top-14 left-0 w-full
+                          bg-white
+                          border border-black/10
+                          rounded-2xl
+                          shadow-2xl
+                          p-6
+                          text-center
+                          text-sm
+                          text-black/50
+                          z-50
+                        "
+                    >
+                      No products found
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* SEARCH ICON */}
 
-            {!showSearch && (
-              <button
-                onClick={() => setShowSearch(true)}
+            {showSearch ? (
+              <X
+                size={18}
                 className="
-        w-9 h-9
-        rounded-full
-        flex items-center justify-center
-        hover:bg-black/5
-        transition
-      "
-              >
-                <Search size={18} className="hover:scale-110 transition" />
-              </button>
+      ml-2
+      cursor-pointer
+      hover:rotate-90
+      transition
+      shrink-0
+    "
+                onClick={closeSearch}
+              />
+            ) : (
+              <Search
+                size={18}
+                className="
+                  cursor-pointer
+                  hover:scale-110
+                  transition
+                "
+                onClick={() => setShowSearch(true)}
+              />
             )}
           </div>
 
