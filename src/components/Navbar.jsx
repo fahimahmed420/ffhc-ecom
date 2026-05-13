@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -21,16 +15,9 @@ import {
   Clock3,
 } from "lucide-react";
 
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-} from "framer-motion";
+import { motion, AnimatePresence, useMotionValue } from "framer-motion";
 
-import {
-  useRouter,
-  usePathname,
-} from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 import { useCart } from "@/context/CartContext";
 import { logoutUser } from "@/lib/firebase/auth";
@@ -46,30 +33,23 @@ export default function Navbar() {
   // ======================================================
   // STATES
   // ======================================================
-  const [showSearch, setShowSearch] =
-    useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   const [query, setQuery] = useState("");
 
   const [results, setResults] = useState([]);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [dropdownOpen, setDropdownOpen] =
-    useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const [showNavbar, setShowNavbar] =
-    useState(true);
+  const [showNavbar, setShowNavbar] = useState(true);
 
-  const [scrolled, setScrolled] =
-    useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  const [activeIndex, setActiveIndex] =
-    useState(-1);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
-  const [recentSearches, setRecentSearches] =
-    useState([]);
+  const [recentSearches, setRecentSearches] = useState([]);
 
   // ======================================================
   // REFS
@@ -111,7 +91,7 @@ export default function Navbar() {
         path: "/about",
       },
     ],
-    []
+    [],
   );
 
   // ======================================================
@@ -125,38 +105,30 @@ export default function Navbar() {
 
       if (!el || !nav) return;
 
-      const rect =
-        el.getBoundingClientRect();
+      const rect = el.getBoundingClientRect();
 
-      const parentRect =
-        nav.getBoundingClientRect();
+      const parentRect = nav.getBoundingClientRect();
 
       x.set(rect.left - parentRect.left);
 
       width.set(rect.width);
     },
-    [width, x]
+    [width, x],
   );
 
   useEffect(() => {
     moveIndicator(pathname);
   }, [pathname, moveIndicator]);
 
-  const handleHover = (path) =>
-    moveIndicator(path);
+  const handleHover = (path) => moveIndicator(path);
 
-  const handleLeave = () =>
-    moveIndicator(pathname);
+  const handleLeave = () => moveIndicator(pathname);
 
   // ======================================================
   // RECENT SEARCHES
   // ======================================================
   useEffect(() => {
-    const stored = JSON.parse(
-      localStorage.getItem(
-        "recentSearches"
-      ) || "[]"
-    );
+    const stored = JSON.parse(localStorage.getItem("recentSearches") || "[]");
 
     setRecentSearches(stored);
   }, []);
@@ -174,39 +146,29 @@ export default function Navbar() {
     setActiveIndex(-1);
   };
 
- const handleSearch = (searchValue = query) => {
-  if (!searchValue.trim()) return;
+  const handleSearch = (searchValue = query) => {
+    if (!searchValue.trim()) return;
 
-  const updated = [
-    searchValue,
-    ...recentSearches.filter(
-      (item) => item !== searchValue
-    ),
-  ].slice(0, 6);
+    const updated = [
+      searchValue,
+      ...recentSearches.filter((item) => item !== searchValue),
+    ].slice(0, 6);
 
-  localStorage.setItem(
-    "recentSearches",
-    JSON.stringify(updated)
-  );
+    localStorage.setItem("recentSearches", JSON.stringify(updated));
 
-  setRecentSearches(updated);
+    setRecentSearches(updated);
 
-  // ✅ GO TO PRODUCTS PAGE WITH SEARCH PARAM
-  router.push(
-    `/collections?search=${encodeURIComponent(
-      searchValue
-    )}`
-  );
+    // ✅ GO TO PRODUCTS PAGE WITH SEARCH PARAM
+    router.push(`/collections?search=${encodeURIComponent(searchValue)}`);
 
-  closeSearch();
-};
+    closeSearch();
+  };
 
   // ======================================================
   // LIVE SEARCH
   // ======================================================
   useEffect(() => {
-    const controller =
-      new AbortController();
+    const controller = new AbortController();
 
     const fetchProducts = async () => {
       if (!query.trim()) {
@@ -218,12 +180,10 @@ export default function Navbar() {
         setLoading(true);
 
         const res = await fetch(
-          `/api/products?search=${encodeURIComponent(
-            query
-          )}&minimal=true`,
+          `/api/products?search=${encodeURIComponent(query)}&minimal=true`,
           {
             signal: controller.signal,
-          }
+          },
         );
 
         const data = await res.json();
@@ -240,10 +200,7 @@ export default function Navbar() {
       }
     };
 
-    const debounce = setTimeout(
-      fetchProducts,
-      300
-    );
+    const debounce = setTimeout(fetchProducts, 300);
 
     return () => {
       controller.abort();
@@ -265,36 +222,19 @@ export default function Navbar() {
   useEffect(() => {
     const handleClickOutside = (e) => {
       // USER DROPDOWN
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(
-          e.target
-        )
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
       }
 
       // SEARCH
-      if (
-        searchRef.current &&
-        !searchRef.current.contains(
-          e.target
-        )
-      ) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
         closeSearch();
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
+    document.addEventListener("mousedown", handleClickOutside);
 
-    return () =>
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // ======================================================
@@ -307,16 +247,9 @@ export default function Navbar() {
       }
     };
 
-    window.addEventListener(
-      "keydown",
-      handleEscape
-    );
+    window.addEventListener("keydown", handleEscape);
 
-    return () =>
-      window.removeEventListener(
-        "keydown",
-        handleEscape
-      );
+    return () => window.removeEventListener("keydown", handleEscape);
   }, []);
 
   // ======================================================
@@ -326,8 +259,7 @@ export default function Navbar() {
     const handleScroll = () => {
       const current = window.scrollY;
 
-      const diff =
-        current - lastScrollY.current;
+      const diff = current - lastScrollY.current;
 
       setScrolled(current > 10);
 
@@ -344,19 +276,11 @@ export default function Navbar() {
       lastScrollY.current = current;
     };
 
-    window.addEventListener(
-      "scroll",
-      handleScroll,
-      {
-        passive: true,
-      }
-    );
+    window.addEventListener("scroll", handleScroll, {
+      passive: true,
+    });
 
-    return () =>
-      window.removeEventListener(
-        "scroll",
-        handleScroll
-      );
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // ======================================================
@@ -427,17 +351,9 @@ export default function Navbar() {
             <Link
               key={item.path}
               href={item.path}
-              ref={(el) =>
-                (itemRefs.current[
-                  item.path
-                ] = el)
-              }
-              onMouseEnter={() =>
-                handleHover(item.path)
-              }
-              onMouseLeave={
-                handleLeave
-              }
+              ref={(el) => (itemRefs.current[item.path] = el)}
+              onMouseEnter={() => handleHover(item.path)}
+              onMouseLeave={handleLeave}
               className={`
                 px-2 py-1 transition
                 ${
@@ -478,231 +394,208 @@ export default function Navbar() {
           {/* SEARCH */}
           {/* ====================================================== */}
 
-          <div
-            className="relative"
-            ref={searchRef}
-          >
+          <div className="relative flex items-center" ref={searchRef}>
             <AnimatePresence>
               {showSearch && (
                 <motion.div
                   initial={{
                     width: 0,
                     opacity: 0,
-                    scale: 0.96,
                   }}
                   animate={{
                     width: 320,
                     opacity: 1,
-                    scale: 1,
                   }}
                   exit={{
                     width: 0,
                     opacity: 0,
-                    scale: 0.96,
                   }}
                   transition={{
                     duration: 0.25,
                   }}
-                  className="relative"
+                  className="
+          flex items-center gap-2
+          overflow-hidden
+        "
                 >
-                  {/* INPUT */}
+                  {/* CLOSE BUTTON */}
 
-                  <input
-                    ref={inputRef}
-                    autoFocus
-                    type="text"
-                    placeholder="Search products..."
-                    value={query}
-                    onChange={(e) => {
-                      setQuery(
-                        e.target.value
-                      );
+                  <button
+                    onClick={closeSearch}
+                    className="
+            flex-shrink-0
+            w-9 h-9
+            rounded-full
+            flex items-center justify-center
+            hover:bg-black/5
+            transition
+          "
+                  >
+                    <X size={18} className="hover:rotate-90 transition" />
+                  </button>
 
-                      setActiveIndex(-1);
-                    }}
-                    onKeyDown={(e) => {
-                      if (
-                        e.key ===
-                        "ArrowDown"
-                      ) {
-                        setActiveIndex(
-                          (prev) =>
-                            prev <
-                            results.length - 1
-                              ? prev + 1
-                              : prev
-                        );
-                      }
+                  {/* INPUT + DROPDOWN */}
 
-                      if (
-                        e.key === "ArrowUp"
-                      ) {
-                        setActiveIndex(
-                          (prev) =>
-                            prev > 0
-                              ? prev - 1
-                              : 0
-                        );
-                      }
+                  <div className="relative w-[270px]">
+                    <input
+                      ref={inputRef}
+                      autoFocus
+                      type="text"
+                      placeholder="Search products..."
+                      value={query}
+                      onChange={(e) => {
+                        setQuery(e.target.value);
 
-                      if (
-                        e.key === "Enter"
-                      ) {
-                        if (
-                          activeIndex >= 0
-                        ) {
-                          router.push(
-                            `/collections/${results[activeIndex]._id}`
+                        setActiveIndex(-1);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "ArrowDown") {
+                          setActiveIndex((prev) =>
+                            prev < results.length - 1 ? prev + 1 : prev,
                           );
-
-                          closeSearch();
-
-                          return;
                         }
 
-                        handleSearch();
-                      }
-                    }}
-                    className="
-                      w-full
-                      border border-black/10
-                      bg-white/90
-                      backdrop-blur-xl
-                      px-4 py-2 pr-10
-                      rounded-2xl
-                      text-sm
-                      outline-none
-                      shadow-xl
-                    "
-                  />
+                        if (e.key === "ArrowUp") {
+                          setActiveIndex((prev) => (prev > 0 ? prev - 1 : 0));
+                        }
 
-                  {/* ====================================================== */}
-                  {/* RECENT SEARCHES */}
-                  {/* ====================================================== */}
+                        if (e.key === "Enter") {
+                          if (activeIndex >= 0) {
+                            router.push(
+                              `/collections/${results[activeIndex]._id}`,
+                            );
 
-                  {!query &&
-                    recentSearches.length >
-                      0 && (
+                            closeSearch();
+
+                            return;
+                          }
+
+                          handleSearch();
+                        }
+                      }}
+                      className="
+              w-full
+              border border-black/10
+              bg-white/90
+              backdrop-blur-xl
+              px-4 py-2.5
+              rounded-xl
+              text-sm
+              outline-none
+              shadow-xl
+            "
+                    />
+
+                    {/* ====================================================== */}
+                    {/* RECENT SEARCHES */}
+                    {/* ====================================================== */}
+
+                    {!query && recentSearches.length > 0 && (
                       <div
                         className="
-                          absolute top-14 left-0 w-full
-                          bg-white/95
-                          backdrop-blur-xl
-                          border border-black/10
-                          rounded-2xl
-                          shadow-2xl
-                          p-4
-                          z-50
-                        "
+                  absolute top-14 left-0 w-full
+                  bg-white/95
+                  backdrop-blur-xl
+                  border border-black/10
+                  rounded-2xl
+                  shadow-2xl
+                  p-4
+                  z-50
+                "
                       >
                         <p
                           className="
-                            text-xs
-                            text-black/40
-                            mb-3
-                          "
+                    text-xs
+                    text-black/40
+                    mb-3
+                  "
                         >
-                          Recent
-                          Searches
+                          Recent Searches
                         </p>
 
                         <div className="flex flex-wrap gap-2">
-                          {recentSearches.map(
-                            (item) => (
-                              <button
-                                key={item}
-                                onClick={() =>
-                                  handleSearch(
-                                    item
-                                  )
-                                }
-                                className="
-                                  flex items-center gap-1
-                                  px-3 py-1.5
-                                  rounded-full
-                                  bg-black/5
-                                  hover:bg-black
-                                  hover:text-white
-                                  text-xs
-                                  transition
-                                "
-                              >
-                                <Clock3
-                                  size={
-                                    12
-                                  }
-                                />
+                          {recentSearches.map((item) => (
+                            <button
+                              key={item}
+                              onClick={() => handleSearch(item)}
+                              className="
+                        flex items-center gap-1
+                        px-3 py-1.5
+                        rounded-full
+                        bg-black/5
+                        hover:bg-black
+                        hover:text-white
+                        text-xs
+                        transition
+                      "
+                            >
+                              <Clock3 size={12} />
 
-                                {item}
-                              </button>
-                            )
-                          )}
+                              {item}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     )}
 
-                  {/* ====================================================== */}
-                  {/* LOADING */}
-                  {/* ====================================================== */}
+                    {/* ====================================================== */}
+                    {/* LOADING */}
+                    {/* ====================================================== */}
 
-                  {loading && (
-                    <div
-                      className="
-                        absolute top-14 left-0 w-full
-                        bg-white rounded-2xl
-                        border border-black/10
-                        p-3 space-y-3
-                        shadow-2xl
-                        z-50
-                      "
-                    >
-                      {[...Array(4)].map(
-                        (_, i) => (
+                    {loading && (
+                      <div
+                        className="
+                absolute top-14 left-0 w-full
+                bg-white rounded-2xl
+                border border-black/10
+                p-3 space-y-3
+                shadow-2xl
+                z-50
+              "
+                      >
+                        {[...Array(4)].map((_, i) => (
                           <div
                             key={i}
                             className="
-                              flex items-center gap-3
-                              animate-pulse
-                            "
+                    flex items-center gap-3
+                    animate-pulse
+                  "
                           >
                             <div
                               className="
-                                w-14 h-14 rounded-lg
-                                bg-black/10
-                              "
+                      w-14 h-14 rounded-lg
+                      bg-black/10
+                    "
                             />
 
                             <div className="flex-1 space-y-2">
                               <div
                                 className="
-                                  h-3 rounded
-                                  bg-black/10
-                                  w-2/3
-                                "
+                        h-3 rounded
+                        bg-black/10
+                        w-2/3
+                      "
                               />
 
                               <div
                                 className="
-                                  h-2 rounded
-                                  bg-black/10
-                                  w-1/3
-                                "
+                        h-2 rounded
+                        bg-black/10
+                        w-1/3
+                      "
                               />
                             </div>
                           </div>
-                        )
-                      )}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
 
-                  {/* ====================================================== */}
-                  {/* RESULTS */}
-                  {/* ====================================================== */}
+                    {/* ====================================================== */}
+                    {/* RESULTS */}
+                    {/* ====================================================== */}
 
-                  <AnimatePresence>
-                    {!loading &&
-                      results.length >
-                        0 && (
+                    <AnimatePresence>
+                      {!loading && results.length > 0 && (
                         <motion.div
                           initial={{
                             opacity: 0,
@@ -717,176 +610,133 @@ export default function Navbar() {
                             y: 10,
                           }}
                           className="
-                            absolute top-14 left-0 w-full
-                            bg-white/95
-                            backdrop-blur-xl
-                            border border-black/10
-                            rounded-2xl
-                            shadow-2xl
-                            overflow-hidden
-                            z-50
-                          "
+                    absolute top-14 left-0 w-full
+                    bg-white/95
+                    backdrop-blur-xl
+                    border border-black/10
+                    rounded-2xl
+                    shadow-2xl
+                    overflow-hidden
+                    z-50
+                  "
                         >
-                          {results.map(
-                            (
-                              product,
-                              index
-                            ) => (
-                              <Link
-                                key={
-                                  product._id
-                                }
-                                href={`/collections/${product._id}`}
-                                className={`
-                                  flex items-center gap-3
-                                  p-3 transition
-                                  ${
-                                    activeIndex ===
-                                    index
-                                      ? "bg-black text-white"
-                                      : "hover:bg-black/5"
-                                  }
-                                `}
-                                onClick={() =>
-                                  closeSearch()
-                                }
-                              >
-                                <Image
-                                  src={
-                                    product.thumbnail
-                                  }
-                                  alt={
-                                    product.title
-                                  }
-                                  width={
-                                    56
-                                  }
-                                  height={
-                                    56
-                                  }
+                          {results.map((product, index) => (
+                            <Link
+                              key={product._id}
+                              href={`/collections/${product._id}`}
+                              className={`
+                          flex items-center gap-3
+                          p-3 transition
+                          ${
+                            activeIndex === index
+                              ? "bg-black text-white"
+                              : "hover:bg-black/5"
+                          }
+                        `}
+                              onClick={() => closeSearch()}
+                            >
+                              <Image
+                                src={product.thumbnail}
+                                alt={product.title}
+                                width={56}
+                                height={56}
+                                className="
+                            rounded-lg
+                            object-cover
+                          "
+                                unoptimized
+                              />
+
+                              <div className="flex-1 min-w-0">
+                                <h4
                                   className="
-                                    rounded-lg
-                                    object-cover
-                                  "
-                                  unoptimized
-                                />
+                              text-sm
+                              font-medium
+                              truncate
+                            "
+                                >
+                                  {product.title}
+                                </h4>
 
-                                <div className="flex-1 min-w-0">
-                                  <h4
-                                    className="
-                                      text-sm
-                                      font-medium
-                                      truncate
-                                    "
-                                  >
-                                    {
-                                      product.title
-                                    }
-                                  </h4>
-
-                                  <p
-                                    className={`
-                                      text-xs
-                                      ${
-                                        activeIndex ===
-                                        index
-                                          ? "text-white/70"
-                                          : "text-black/50"
-                                      }
-                                    `}
-                                  >
-                                    {
-                                      product.category
-                                    }
-                                  </p>
-                                </div>
-
-                                <p className="text-sm font-semibold">
-                                  $
-                                  {
-                                    product.price
-                                  }
+                                <p
+                                  className={`
+                              text-xs
+                              ${
+                                activeIndex === index
+                                  ? "text-white/70"
+                                  : "text-black/50"
+                              }
+                            `}
+                                >
+                                  {product.category}
                                 </p>
-                              </Link>
-                            )
-                          )}
+                              </div>
 
-                          {/* VIEW ALL */}
+                              <p className="text-sm font-semibold">
+                                ${product.price}
+                              </p>
+                            </Link>
+                          ))}
 
                           <button
-                            onClick={() =>
-                              handleSearch()
-                            }
+                            onClick={() => handleSearch()}
                             className="
-                              w-full text-center
-                              py-3 text-sm
-                              border-t border-black/10
-                              hover:bg-black
-                              hover:text-white
-                              transition
-                            "
+                      w-full text-center
+                      py-3 text-sm
+                      border-t border-black/10
+                      hover:bg-black
+                      hover:text-white
+                      transition
+                    "
                           >
                             View All Results
                           </button>
                         </motion.div>
                       )}
-                  </AnimatePresence>
+                    </AnimatePresence>
 
-                  {/* ====================================================== */}
-                  {/* EMPTY */}
-                  {/* ====================================================== */}
+                    {/* ====================================================== */}
+                    {/* EMPTY */}
+                    {/* ====================================================== */}
 
-                  {query.trim() &&
-                    !loading &&
-                    results.length ===
-                      0 && (
+                    {query.trim() && !loading && results.length === 0 && (
                       <div
                         className="
-                          absolute top-14 left-0 w-full
-                          bg-white
-                          border border-black/10
-                          rounded-2xl
-                          shadow-2xl
-                          p-6
-                          text-center
-                          text-sm
-                          text-black/50
-                          z-50
-                        "
+                  absolute top-14 left-0 w-full
+                  bg-white
+                  border border-black/10
+                  rounded-2xl
+                  shadow-2xl
+                  p-6
+                  text-center
+                  text-sm
+                  text-black/50
+                  z-50
+                "
                       >
                         No products found
                       </div>
                     )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* SEARCH ICON */}
 
-            {showSearch ? (
-              <X
-                size={18}
+            {!showSearch && (
+              <button
+                onClick={() => setShowSearch(true)}
                 className="
-                  absolute -left-6
-                  top-1/2 -translate-y-1/2
-                  cursor-pointer
-                  hover:rotate-90
-                  transition
-                "
-                onClick={closeSearch}
-              />
-            ) : (
-              <Search
-                size={18}
-                className="
-                  cursor-pointer
-                  hover:scale-110
-                  transition
-                "
-                onClick={() =>
-                  setShowSearch(true)
-                }
-              />
+        w-9 h-9
+        rounded-full
+        flex items-center justify-center
+        hover:bg-black/5
+        transition
+      "
+              >
+                <Search size={18} className="hover:scale-110 transition" />
+              </button>
             )}
           </div>
 
@@ -899,9 +749,7 @@ export default function Navbar() {
               relative cursor-pointer
               hidden md:flex
             "
-            onClick={() =>
-              router.push("/cart")
-            }
+            onClick={() => router.push("/cart")}
           >
             <ShoppingBag size={18} />
 
@@ -933,9 +781,7 @@ export default function Navbar() {
           >
             {!user ? (
               <button
-                onClick={() =>
-                  router.push("/auth")
-                }
+                onClick={() => router.push("/auth")}
                 className="
                   text-xs border
                   px-3 py-1
@@ -949,11 +795,7 @@ export default function Navbar() {
             ) : (
               <div>
                 <button
-                  onClick={() =>
-                    setDropdownOpen(
-                      !dropdownOpen
-                    )
-                  }
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="
                     w-8 h-8
                     flex items-center justify-center
@@ -1000,13 +842,9 @@ export default function Navbar() {
                       <div className="p-2">
                         <button
                           onClick={() => {
-                            router.push(
-                              "/dashboard"
-                            );
+                            router.push("/dashboard");
 
-                            setDropdownOpen(
-                              false
-                            );
+                            setDropdownOpen(false);
                           }}
                           className="
                             w-full
@@ -1018,17 +856,12 @@ export default function Navbar() {
                             transition
                           "
                         >
-                          <LayoutDashboard
-                            size={14}
-                          />
-
+                          <LayoutDashboard size={14} />
                           Dashboard
                         </button>
 
                         <button
-                          onClick={
-                            handleLogout
-                          }
+                          onClick={handleLogout}
                           className="
                             w-full
                             flex items-center gap-2
@@ -1040,10 +873,7 @@ export default function Navbar() {
                             transition
                           "
                         >
-                          <LogOut
-                            size={14}
-                          />
-
+                          <LogOut size={14} />
                           Logout
                         </button>
                       </div>

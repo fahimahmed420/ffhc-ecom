@@ -198,12 +198,60 @@ export default function Collections() {
   }, [hasMore, loading]);
 
   // ======================================================
-  // LOADING
+  // LOADING SKELETON
   // ======================================================
   if (initialLoading) {
     return (
-      <section className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading products...</p>
+      <section className="px-4 md:px-12 py-10 max-w-7xl mx-auto min-h-screen animate-pulse">
+        {/* HEADER */}
+        <div className="mb-8 flex flex-row items-center justify-between gap-4">
+          <div className="space-y-3">
+            <div className="h-8 w-52 bg-gray-200 rounded-xl" />
+
+            <div className="h-4 w-32 bg-gray-100 rounded-lg" />
+          </div>
+
+          <div className="h-11 w-40 bg-gray-200 rounded-xl" />
+        </div>
+
+        {/* CATEGORY SKELETON */}
+        {!search && (
+          <div className="mb-6 flex flex-wrap gap-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-8 w-24 bg-gray-200 rounded-full" />
+            ))}
+          </div>
+        )}
+
+        {/* PRODUCT GRID */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm"
+            >
+              {/* IMAGE */}
+              <div className="h-[220px] bg-gray-200" />
+
+              {/* CONTENT */}
+              <div className="p-4">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
+
+                <div className="h-3 bg-gray-100 rounded w-1/3 mb-5" />
+
+                <div className="flex items-end justify-between">
+                  <div className="space-y-2">
+                    <div className="h-3 w-16 bg-gray-100 rounded" />
+
+                    <div className="h-5 w-20 bg-gray-200 rounded" />
+                  </div>
+
+                  <div className="h-10 w-10 rounded-full bg-gray-200" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
     );
   }
@@ -219,9 +267,7 @@ export default function Collections() {
             {search ? `Search: "${search}"` : "Latest Products"}
           </h1>
 
-          <p className="text-gray-500 mt-1">
-            {products.length} products found
-          </p>
+          <p className="text-gray-500 mt-1">{products.length} products found</p>
         </div>
 
         <select
