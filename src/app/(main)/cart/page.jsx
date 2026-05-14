@@ -373,7 +373,7 @@ export default function CartPage() {
       </div>
 
       {/* MOBILE FLOATING SUMMARY */}
-      <div className="lg:hidden fixed bottom-6 left-3 right-3 z-40">
+      <div className="lg:hidden fixed bottom-21 left-3 right-3 z-40">
         <div className="bg-white/95 backdrop-blur-xl border border-gray-200 rounded-3xl shadow-2xl p-4">
           <div className="flex items-center justify-between gap-4">
             {/* LEFT */}
