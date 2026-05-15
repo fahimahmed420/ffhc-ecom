@@ -145,27 +145,36 @@ export default function Collections() {
   // ======================================================
   // FILTER / SEARCH / SORT CHANGE
   // ======================================================
-  useEffect(() => {
-    setProducts([]);
+useEffect(() => {
+  setProducts([]);
 
-    setHasMore(true);
+  setHasMore(true);
 
-    setInitialLoading(true);
+  setInitialLoading(true);
 
-    setPage(0);
-  }, [selectedCategory, sortOrder, search]);
+  fetchingRef.current = false;
+
+  setPage(0);
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}, [selectedCategory, sortOrder, search]);
 
   // ======================================================
   // PAGE CHANGE
   // ======================================================
   useEffect(() => {
     fetchProducts(page, page === 0);
-  }, [page]);
-
+  }, [page, fetchProducts]);
   // ======================================================
   // INFINITE SCROLL
   // ======================================================
+
   useEffect(() => {
+    if (initialLoading) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         const first = entries[0];
@@ -174,13 +183,15 @@ export default function Collections() {
           first.isIntersecting &&
           hasMore &&
           !loading &&
-          !fetchingRef.current
+          !fetchingRef.current &&
+          products.length > 0
         ) {
           setPage((prev) => prev + 1);
         }
       },
       {
-        threshold: 1,
+        threshold: 0.2,
+        rootMargin: "200px",
       },
     );
 
@@ -195,7 +206,7 @@ export default function Collections() {
         observer.unobserve(currentLoader);
       }
     };
-  }, [hasMore, loading]);
+  }, [hasMore, loading, initialLoading, products.length]);
 
   // ======================================================
   // LOADING SKELETON
@@ -292,7 +303,11 @@ export default function Collections() {
             {categories.map((cat, i) => (
               <button
                 key={i}
-                onClick={() => setSelectedCategory(cat.name)}
+                onClick={() => {
+                  if (selectedCategory !== cat.name) {
+                    setSelectedCategory(cat.name);
+                  }
+                }}
                 className={`
                   whitespace-nowrap px-3 py-1.5 rounded-full text-xs
                   border transition
