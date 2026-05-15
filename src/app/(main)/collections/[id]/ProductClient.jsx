@@ -235,7 +235,7 @@ export default function ProductClient({ initialData }) {
   ====================================================== */
 
   return (
-    <section className="max-w-7xl mx-auto px-6 md:px-12 py-10">
+    <section className="max-w-7xl mx-auto px-6 md:px-12 py-20">
       {/* BREADCRUMB */}
       <div className="text-sm text-gray-500 mb-4">
         <Link href="/">Home</Link> &gt;{" "}

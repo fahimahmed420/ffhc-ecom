@@ -4,20 +4,28 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { IoMdStar, IoMdStarHalf, IoMdStarOutline } from "react-icons/io";
+import {
+  IoMdStar,
+  IoMdStarHalf,
+  IoMdStarOutline,
+} from "react-icons/io";
 
 /* ================= Skeleton ================= */
 function BestSellingSkeleton() {
   return (
-    <section className="px-6 md:px-12 py-20 max-w-7xl mx-auto animate-pulse">
-      <div className="h-6 w-48 bg-gray-200 rounded mx-auto mb-12" />
+    <section className="px-6 md:px-12 py-20 max-w-7xl mx-auto">
+      <div className="h-6 w-48 bg-gray-200 rounded mx-auto mb-12 animate-pulse" />
+
       <div className="grid md:grid-cols-4 grid-cols-2 gap-6">
-        {[1, 2, 3, 4].map((item) => (
-          <div key={item} className="border bg-white">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-2xl overflow-hidden border border-gray-100 bg-white animate-pulse"
+          >
             <div className="w-full aspect-square bg-gray-200" />
-            <div className="p-6 space-y-3">
-              <div className="h-4 w-3/4 bg-gray-200 rounded" />
-              <div className="h-4 w-1/3 bg-gray-200 rounded" />
+            <div className="p-4 space-y-3">
+              <div className="h-3 w-3/4 bg-gray-200 rounded" />
+              <div className="h-3 w-1/3 bg-gray-200 rounded" />
             </div>
           </div>
         ))}
@@ -41,38 +49,48 @@ export default function BestSelling() {
   };
 
   const renderStars = (rating = 0) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      if (i <= Math.floor(rating)) stars.push(<IoMdStar key={i} />);
-      else if (i - rating <= 0.5) stars.push(<IoMdStarHalf key={i} />);
-      else stars.push(<IoMdStarOutline key={i} />);
-    }
-    return stars;
+    return Array.from({ length: 5 }).map((_, i) => {
+      if (i < Math.floor(rating))
+        return <IoMdStar key={i} />;
+      if (i + 0.5 < rating)
+        return <IoMdStarHalf key={i} />;
+      return <IoMdStarOutline key={i} />;
+    });
   };
 
   useEffect(() => {
-    fetch("/api/products/best-selling")
-      .then((res) => res.json())
-      .then((data) => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/products/best-selling");
+        const data = await res.json();
         setProducts(data.products || []);
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error(err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    load();
   }, []);
 
   if (loading) return <BestSellingSkeleton />;
 
   return (
-    <section className="px-6 md:px-12 py-20 max-w-7xl mx-auto">
-      <h2 className="text-2xl mb-12 text-center font-semibold">
-        Best Selling
-      </h2>
+    <section className="px-6 md:px-12 max-w-7xl mx-auto">
+      {/* HEADER */}
+      <div className="text-center mb-8 md:mb-12">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-rose-500 via-pink-500 to-purple-500 text-transparent bg-clip-text">
+          Best Selling Products
+        </h2>
+        <p className="text-sm text-gray-500 mt-2">
+          Top picks loved by customers
+        </p>
+      </div>
 
+      {/* GRID */}
       <div className="grid md:grid-cols-4 grid-cols-2 gap-6">
-        {products.map((p) => {
+        {products.map((p, i) => {
           const rating =
             p.avgRating !== undefined
               ? p.avgRating
@@ -81,53 +99,70 @@ export default function BestSelling() {
           return (
             <motion.div
               key={p._id}
-              whileHover={{
-                y: -6,
-                scale: 1.01,
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                delay: i * 0.05,
+                duration: 0.4,
               }}
-              transition={{ type: "spring", stiffness: 200 }}
+              whileHover={{
+                y: -8,
+                scale: 1.02,
+              }}
+              onClick={() =>
+                router.push(`/collections/${p._id}`)
+              }
               className="
                 group
-                border border-gray-200
-                bg-white
                 cursor-pointer
-                relative
+                rounded-2xl
                 overflow-hidden
+                bg-white
+                border border-gray-100
+                shadow-sm
+                hover:shadow-2xl
                 transition-all duration-300
-                hover:shadow-xl
               "
-              onClick={() => router.push(`/collections/${p._id}`)}
             >
               {/* IMAGE */}
-              <div className="relative w-full aspect-square overflow-hidden">
+              <div className="relative aspect-square overflow-hidden bg-gray-50">
                 <Image
                   src={p.thumbnail || "/fallback.png"}
                   alt={p.title}
                   fill
-                  className="object-cover group-hover:scale-105 transition duration-500"
+                  className="
+                    object-cover
+                    group-hover:scale-110
+                    transition-transform duration-500
+                  "
                 />
 
-                {/* ⭐ Rating */}
-                <div className="absolute top-2 right-2 text-[11px] border bg-white px-3 py-1 flex items-center gap-1">
-                  {renderStars(rating)}
-                  <span className="text-[10px] ml-1">
+                {/* gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+
+                {/* rating badge */}
+                <div className="absolute top-2 right-2 flex items-center gap-1 text-[11px] bg-white/90 backdrop-blur-md px-2 py-1 rounded-full shadow">
+                  <span className="text-yellow-500 flex gap-[2px]">
+                    {renderStars(rating)}
+                  </span>
+                  <span className="text-[10px] text-gray-600 ml-1">
                     {rating.toFixed(1)}
                   </span>
                 </div>
               </div>
 
               {/* INFO */}
-              <div className="p-6 relative">
-                <h3 className="text-sm font-medium mb-2 line-clamp-1">
+              <div className="p-4 relative">
+                <h3 className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-black transition">
                   {p.title}
                 </h3>
 
-                <p className="text-sm text-gray-500">
+                <p className="text-sm font-semibold text-gray-600 mt-1">
                   ৳{p.discountPrice}
                 </p>
 
-                {/* subtle bottom hover line like your other cards */}
-                <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-black transition-all duration-300 group-hover:w-full" />
+                {/* animated underline */}
+                <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-pink-500 to-purple-500 group-hover:w-full transition-all duration-300" />
               </div>
             </motion.div>
           );

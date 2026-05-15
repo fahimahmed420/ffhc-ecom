@@ -31,8 +31,9 @@ export default function Navbar() {
   const { user } = useAuth();
 
   // ======================================================
-  // STATES
+  // STATE
   // ======================================================
+
   const [showSearch, setShowSearch] = useState(false);
 
   const [query, setQuery] = useState("");
@@ -43,22 +44,19 @@ export default function Navbar() {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const [showNavbar, setShowNavbar] = useState(true);
-
-  const [scrolled, setScrolled] = useState(false);
-
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const [recentSearches, setRecentSearches] = useState([]);
 
+  const [scrolled, setScrolled] = useState(false);
+
   // ======================================================
   // REFS
   // ======================================================
+
   const navRef = useRef(null);
 
   const itemRefs = useRef({});
-
-  const lastScrollY = useRef(0);
 
   const dropdownRef = useRef(null);
 
@@ -69,6 +67,7 @@ export default function Navbar() {
   // ======================================================
   // MOTION
   // ======================================================
+
   const x = useMotionValue(0);
 
   const width = useMotionValue(0);
@@ -76,6 +75,7 @@ export default function Navbar() {
   // ======================================================
   // NAV ITEMS
   // ======================================================
+
   const navItems = useMemo(
     () => [
       {
@@ -95,8 +95,9 @@ export default function Navbar() {
   );
 
   // ======================================================
-  // MOVE INDICATOR
+  // ACTIVE INDICATOR
   // ======================================================
+
   const moveIndicator = useCallback(
     (path) => {
       const el = itemRefs.current[path];
@@ -113,30 +114,43 @@ export default function Navbar() {
 
       width.set(rect.width);
     },
-    [width, x],
+    [x, width],
   );
 
   useEffect(() => {
     moveIndicator(pathname);
   }, [pathname, moveIndicator]);
 
-  const handleHover = (path) => moveIndicator(path);
+  // ======================================================
+  // SCROLL EFFECT
+  // ======================================================
 
-  const handleLeave = () => moveIndicator(pathname);
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // ======================================================
   // RECENT SEARCHES
   // ======================================================
+
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("recentSearches") || "[]");
+    const stored =
+      JSON.parse(localStorage.getItem("recentSearches")) || [];
 
     setRecentSearches(stored);
   }, []);
 
   // ======================================================
-  // SEARCH
+  // CLOSE SEARCH
   // ======================================================
-  const closeSearch = () => {
+
+  const closeSearch = useCallback(() => {
     setShowSearch(false);
 
     setResults([]);
@@ -144,29 +158,41 @@ export default function Navbar() {
     setQuery("");
 
     setActiveIndex(-1);
-  };
+  }, []);
 
-  const handleSearch = (searchValue = query) => {
-    if (!searchValue.trim()) return;
+  // ======================================================
+  // SEARCH SUBMIT
+  // ======================================================
 
-    const updated = [
-      searchValue,
-      ...recentSearches.filter((item) => item !== searchValue),
-    ].slice(0, 6);
+  const handleSearch = useCallback(
+    (searchValue = query) => {
+      if (!searchValue.trim()) return;
 
-    localStorage.setItem("recentSearches", JSON.stringify(updated));
+      const updated = [
+        searchValue,
+        ...recentSearches.filter((item) => item !== searchValue),
+      ].slice(0, 6);
 
-    setRecentSearches(updated);
+      localStorage.setItem(
+        "recentSearches",
+        JSON.stringify(updated),
+      );
 
-    // ✅ GO TO PRODUCTS PAGE WITH SEARCH PARAM
-    router.push(`/collections?search=${encodeURIComponent(searchValue)}`);
+      setRecentSearches(updated);
 
-    closeSearch();
-  };
+      router.push(
+        `/collections?search=${encodeURIComponent(searchValue)}`,
+      );
+
+      closeSearch();
+    },
+    [query, recentSearches, router, closeSearch],
+  );
 
   // ======================================================
   // LIVE SEARCH
   // ======================================================
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -180,7 +206,9 @@ export default function Navbar() {
         setLoading(true);
 
         const res = await fetch(
-          `/api/products?search=${encodeURIComponent(query)}&minimal=true`,
+          `/api/products?search=${encodeURIComponent(
+            query,
+          )}&minimal=true`,
           {
             signal: controller.signal,
           },
@@ -189,7 +217,7 @@ export default function Navbar() {
         const data = await res.json();
 
         if (data.success) {
-          setResults(data.products);
+          setResults(data.products || []);
         }
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -200,7 +228,7 @@ export default function Navbar() {
       }
     };
 
-    const debounce = setTimeout(fetchProducts, 300);
+    const debounce = setTimeout(fetchProducts, 250);
 
     return () => {
       controller.abort();
@@ -212,34 +240,48 @@ export default function Navbar() {
   // ======================================================
   // CLOSE ON ROUTE CHANGE
   // ======================================================
+
   useEffect(() => {
     closeSearch();
-  }, [pathname]);
+  }, [pathname, closeSearch]);
 
   // ======================================================
   // OUTSIDE CLICK
   // ======================================================
+
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      // USER DROPDOWN
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+    const handleOutsideClick = (e) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target)
+      ) {
         setDropdownOpen(false);
       }
 
-      // SEARCH
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(e.target)
+      ) {
         closeSearch();
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick,
+    );
 
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    return () =>
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick,
+      );
+  }, [closeSearch]);
 
   // ======================================================
   // ESC CLOSE
   // ======================================================
+
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape") {
@@ -249,43 +291,17 @@ export default function Navbar() {
 
     window.addEventListener("keydown", handleEscape);
 
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, []);
-
-  // ======================================================
-  // SCROLL
-  // ======================================================
-  useEffect(() => {
-    const handleScroll = () => {
-      const current = window.scrollY;
-
-      const diff = current - lastScrollY.current;
-
-      setScrolled(current > 10);
-
-      if (Math.abs(diff) < 8) return;
-
-      if (current < 80) {
-        setShowNavbar(true);
-      } else if (diff > 0) {
-        setShowNavbar(false);
-      } else {
-        setShowNavbar(true);
-      }
-
-      lastScrollY.current = current;
-    };
-
-    window.addEventListener("scroll", handleScroll, {
-      passive: true,
-    });
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    return () =>
+      window.removeEventListener(
+        "keydown",
+        handleEscape,
+      );
+  }, [closeSearch]);
 
   // ======================================================
   // LOGOUT
   // ======================================================
+
   const handleLogout = async () => {
     await logoutUser();
 
@@ -295,25 +311,30 @@ export default function Navbar() {
   };
 
   return (
-    <div className="mb-10">
+    <div className="">
       <motion.header
-        initial={{ y: 0 }}
+        initial={{
+          y: -80,
+          opacity: 0,
+        }}
         animate={{
-          y: showNavbar ? 0 : -120,
+          y: 0,
+          opacity: 1,
         }}
         transition={{
-          duration: 0.35,
+          duration: 0.4,
         }}
         className={`
-          fixed top-0 left-0 w-full z-50
-          px-4 md:px-12 py-4
+          fixed top-0 left-0 right-0 z-[9999]
           flex items-center justify-between
-          border-b border-black/10
+          px-4 md:px-10 lg:px-14
+          h-16
+          border-b border-black/5
           transition-all duration-300
           ${
             scrolled
-              ? "bg-white/85 backdrop-blur-xl shadow-sm"
-              : "bg-white/60 backdrop-blur-md"
+              ? "bg-white/80 backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.04)]"
+              : "bg-white/55 backdrop-blur-xl"
           }
         `}
       >
@@ -324,8 +345,10 @@ export default function Navbar() {
         <Link
           href="/"
           className="
-            text-sm font-medium
-            tracking-[0.3em]
+            text-sm
+            font-semibold
+            tracking-[0.35em]
+            text-black
             select-none
           "
         >
@@ -333,7 +356,7 @@ export default function Navbar() {
         </Link>
 
         {/* ====================================================== */}
-        {/* NAV */}
+        {/* NAVIGATION */}
         {/* ====================================================== */}
 
         <nav
@@ -342,24 +365,33 @@ export default function Navbar() {
             hidden md:flex
             relative
             items-center
-            gap-10
-            text-[12px]
-            tracking-widest
+            gap-8
+            text-[11px]
+            font-medium
+            tracking-[0.25em]
           "
         >
           {navItems.map((item) => (
             <Link
               key={item.path}
               href={item.path}
-              ref={(el) => (itemRefs.current[item.path] = el)}
-              onMouseEnter={() => handleHover(item.path)}
-              onMouseLeave={handleLeave}
+              ref={(el) =>
+                (itemRefs.current[item.path] = el)
+              }
+              onMouseEnter={() =>
+                moveIndicator(item.path)
+              }
+              onMouseLeave={() =>
+                moveIndicator(pathname)
+              }
               className={`
-                px-2 py-1 transition
+                relative
+                py-2
+                transition-colors duration-300
                 ${
                   pathname === item.path
                     ? "text-black"
-                    : "text-black/60 hover:text-black"
+                    : "text-black/50 hover:text-black"
                 }
               `}
             >
@@ -371,7 +403,8 @@ export default function Navbar() {
             className="
               absolute bottom-0
               h-[2px]
-              bg-black rounded-full
+              rounded-full
+              bg-black
             "
             style={{
               x,
@@ -379,23 +412,26 @@ export default function Navbar() {
             }}
             transition={{
               type: "spring",
-              stiffness: 500,
-              damping: 40,
+              stiffness: 450,
+              damping: 35,
             }}
           />
         </nav>
 
         {/* ====================================================== */}
-        {/* RIGHT */}
+        {/* RIGHT SIDE */}
         {/* ====================================================== */}
 
-        <div className="flex items-center gap-4 relative">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* ====================================================== */}
           {/* SEARCH */}
           {/* ====================================================== */}
 
-          <div className="relative flex items-center" ref={searchRef}>
-            {/* SEARCH TOGGLE BUTTON */}
+          <div
+            ref={searchRef}
+            className="relative flex items-center"
+          >
+            {/* BUTTON */}
 
             <button
               onClick={() => {
@@ -404,22 +440,20 @@ export default function Navbar() {
                 } else {
                   setShowSearch(true);
 
-                  setTimeout(() => {
+                  requestAnimationFrame(() => {
                     inputRef.current?.focus();
-                  }, 100);
+                  });
                 }
               }}
               className="
-      z-20
-      relative
-      flex items-center justify-center
-      w-9 h-9
-      rounded-full
-      hover:bg-black/5
-      active:scale-95
-      transition
-      shrink-0
-    "
+                relative z-20
+                flex items-center justify-center
+                w-10 h-10
+                rounded-full
+                hover:bg-black/5
+                active:scale-95
+                transition
+              "
             >
               <AnimatePresence mode="wait">
                 {showSearch ? (
@@ -428,7 +462,7 @@ export default function Navbar() {
                     initial={{
                       opacity: 0,
                       rotate: -90,
-                      scale: 0.8,
+                      scale: 0.7,
                     }}
                     animate={{
                       opacity: 1,
@@ -438,10 +472,10 @@ export default function Navbar() {
                     exit={{
                       opacity: 0,
                       rotate: 90,
-                      scale: 0.8,
+                      scale: 0.7,
                     }}
                     transition={{
-                      duration: 0.2,
+                      duration: 0.18,
                     }}
                   >
                     <X size={18} />
@@ -452,7 +486,7 @@ export default function Navbar() {
                     initial={{
                       opacity: 0,
                       rotate: 90,
-                      scale: 0.8,
+                      scale: 0.7,
                     }}
                     animate={{
                       opacity: 1,
@@ -462,10 +496,10 @@ export default function Navbar() {
                     exit={{
                       opacity: 0,
                       rotate: -90,
-                      scale: 0.8,
+                      scale: 0.7,
                     }}
                     transition={{
-                      duration: 0.2,
+                      duration: 0.18,
                     }}
                   >
                     <Search size={18} />
@@ -485,9 +519,10 @@ export default function Navbar() {
                   }}
                   animate={{
                     width:
-                      typeof window !== "undefined" && window.innerWidth < 640
-                        ? 180
-                        : 320,
+                      typeof window !== "undefined" &&
+                      window.innerWidth < 640
+                        ? 220
+                        : 340,
                     opacity: 1,
                   }}
                   exit={{
@@ -495,35 +530,37 @@ export default function Navbar() {
                     opacity: 0,
                   }}
                   transition={{
-                    duration: 0.25,
+                    duration: 0.22,
                     ease: "easeInOut",
                   }}
-                  className="
-          relative
-          overflow-visible
-        "
+                  className="relative"
                 >
                   {/* INPUT */}
 
                   <input
                     ref={inputRef}
-                    autoFocus
                     type="text"
+                    autoFocus
                     placeholder="Search products..."
                     value={query}
                     onChange={(e) => {
                       setQuery(e.target.value);
+
                       setActiveIndex(-1);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "ArrowDown") {
                         setActiveIndex((prev) =>
-                          prev < results.length - 1 ? prev + 1 : prev,
+                          prev < results.length - 1
+                            ? prev + 1
+                            : prev,
                         );
                       }
 
                       if (e.key === "ArrowUp") {
-                        setActiveIndex((prev) => (prev > 0 ? prev - 1 : 0));
+                        setActiveIndex((prev) =>
+                          prev > 0 ? prev - 1 : 0,
+                        );
                       }
 
                       if (e.key === "Enter") {
@@ -541,268 +578,294 @@ export default function Navbar() {
                       }
                     }}
                     className="
-            w-full
-            h-10
-            border border-black/10
-            bg-white/90
-            backdrop-blur-xl
-            pl-4 pr-4
-            rounded-xl
-            text-sm
-            outline-none
-            shadow-xl
-          "
+                      w-full
+                      h-11
+                      rounded-2xl
+                      border border-black/10
+                      bg-white/90
+                      backdrop-blur-xl
+                      px-4
+                      text-sm
+                      outline-none
+                      shadow-[0_10px_40px_rgba(0,0,0,0.08)]
+                      placeholder:text-black/35
+                    "
                   />
 
-                  {/* ====================================================== */}
                   {/* RECENT SEARCHES */}
-                  {/* ====================================================== */}
 
-                  {!query && recentSearches.length > 0 && (
-                    <div
-                      className="
-                absolute top-12 left-0
-                w-full
-                bg-white/95
-                backdrop-blur-xl
-                border border-black/10
-                rounded-2xl
-                shadow-2xl
-                p-3
-                z-50
-              "
-                    >
-                      <p
+                  {!query &&
+                    recentSearches.length > 0 && (
+                      <div
                         className="
-                  text-[11px]
-                  text-black/40
-                  mb-3
-                "
+                          absolute top-14 left-0
+                          w-full
+                          rounded-3xl
+                          border border-black/10
+                          bg-white/95
+                          backdrop-blur-2xl
+                          p-4
+                          shadow-[0_20px_60px_rgba(0,0,0,0.12)]
+                          z-50
+                        "
                       >
-                        Recent Searches
-                      </p>
+                        <p
+                          className="
+                            mb-3
+                            text-[11px]
+                            uppercase
+                            tracking-widest
+                            text-black/35
+                          "
+                        >
+                          Recent Searches
+                        </p>
 
-                      <div className="flex flex-wrap gap-2">
-                        {recentSearches.map((item) => (
-                          <button
-                            key={item}
-                            onClick={() => handleSearch(item)}
-                            className="
-                        flex items-center gap-1
-                        px-3 py-1.5
-                        rounded-full
-                        bg-black/5
-                        hover:bg-black
-                        hover:text-white
-                        text-[11px]
-                        transition
-                      "
-                          >
-                            <Clock3 size={11} />
+                        <div className="flex flex-wrap gap-2">
+                          {recentSearches.map(
+                            (item) => (
+                              <button
+                                key={item}
+                                onClick={() =>
+                                  handleSearch(item)
+                                }
+                                className="
+                                  flex items-center gap-1.5
+                                  rounded-full
+                                  bg-black/[0.04]
+                                  px-3 py-2
+                                  text-[11px]
+                                  transition
+                                  hover:bg-black
+                                  hover:text-white
+                                "
+                              >
+                                <Clock3 size={12} />
 
-                            {item}
-                          </button>
-                        ))}
+                                {item}
+                              </button>
+                            ),
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* ====================================================== */}
                   {/* LOADING */}
-                  {/* ====================================================== */}
 
                   {loading && (
                     <div
                       className="
-              absolute top-12 left-0
-              w-full
-              bg-white
-              rounded-2xl
-              border border-black/10
-              p-3
-              space-y-3
-              shadow-2xl
-              z-50
-            "
+                        absolute top-14 left-0
+                        w-full
+                        rounded-3xl
+                        border border-black/10
+                        bg-white/95
+                        p-4
+                        shadow-[0_20px_60px_rgba(0,0,0,0.12)]
+                        z-50
+                      "
                     >
-                      {[...Array(4)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="
-                    flex items-center gap-3
-                    animate-pulse
-                  "
-                        >
-                          <div
-                            className="
-                      w-12 h-12
-                      rounded-lg
-                      bg-black/10
-                    "
-                          />
-
-                          <div className="flex-1 space-y-2">
+                      <div className="space-y-4">
+                        {[...Array(4)].map(
+                          (_, index) => (
                             <div
+                              key={index}
                               className="
-                        h-3 rounded
-                        bg-black/10
-                        w-2/3
-                      "
-                            />
+                                flex items-center gap-3
+                                animate-pulse
+                              "
+                            >
+                              <div
+                                className="
+                                  h-12 w-12
+                                  rounded-xl
+                                  bg-black/10
+                                "
+                              />
 
-                            <div
-                              className="
-                        h-2 rounded
-                        bg-black/10
-                        w-1/3
-                      "
-                            />
-                          </div>
-                        </div>
-                      ))}
+                              <div className="flex-1 space-y-2">
+                                <div
+                                  className="
+                                    h-3
+                                    w-2/3
+                                    rounded-full
+                                    bg-black/10
+                                  "
+                                />
+
+                                <div
+                                  className="
+                                    h-2
+                                    w-1/3
+                                    rounded-full
+                                    bg-black/10
+                                  "
+                                />
+                              </div>
+                            </div>
+                          ),
+                        )}
+                      </div>
                     </div>
                   )}
 
-                  {/* ====================================================== */}
                   {/* RESULTS */}
-                  {/* ====================================================== */}
 
                   <AnimatePresence>
-                    {!loading && results.length > 0 && (
-                      <motion.div
-                        initial={{
-                          opacity: 0,
-                          y: 10,
-                        }}
-                        animate={{
-                          opacity: 1,
-                          y: 0,
-                        }}
-                        exit={{
-                          opacity: 0,
-                          y: 10,
-                        }}
-                        className="
-                  absolute top-12 left-0
-                  w-full
-                  bg-white/95
-                  backdrop-blur-xl
-                  border border-black/10
-                  rounded-2xl
-                  shadow-2xl
-                  overflow-hidden
-                  z-50
-                "
-                      >
-                        {results.map((product, index) => (
-                          <Link
-                            key={product._id}
-                            href={`/collections/${product._id}`}
-                            className={`
-                        flex items-center gap-3
-                        p-3 transition
-                        ${
-                          activeIndex === index
-                            ? "bg-black text-white"
-                            : "hover:bg-black/5"
-                        }
-                      `}
-                            onClick={() => closeSearch()}
-                          >
-                            <Image
-                              src={product.thumbnail}
-                              alt={product.title}
-                              width={48}
-                              height={48}
-                              className="
-                          rounded-lg
-                          object-cover
-                          shrink-0
-                        "
-                              unoptimized
-                            />
-
-                            <div className="flex-1 min-w-0">
-                              <h4
-                                className="
-                            text-sm
-                            font-medium
-                            truncate
-                          "
-                              >
-                                {product.title}
-                              </h4>
-
-                              <p
-                                className={`
-                            text-xs
-                            ${
-                              activeIndex === index
-                                ? "text-white/70"
-                                : "text-black/50"
-                            }
-                          `}
-                              >
-                                {product.category}
-                              </p>
-                            </div>
-
-                            <p
-                              className="
-                          text-xs sm:text-sm
-                          font-semibold
-                          shrink-0
-                        "
-                            >
-                              ${product.price}
-                            </p>
-                          </Link>
-                        ))}
-
-                        {/* VIEW ALL */}
-
-                        <button
-                          onClick={() => handleSearch()}
+                    {!loading &&
+                      results.length > 0 && (
+                        <motion.div
+                          initial={{
+                            opacity: 0,
+                            y: 10,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            y: 0,
+                          }}
+                          exit={{
+                            opacity: 0,
+                            y: 10,
+                          }}
+                          transition={{
+                            duration: 0.2,
+                          }}
                           className="
-                    w-full
-                    text-center
-                    py-3
-                    text-sm
-                    border-t border-black/10
-                    hover:bg-black
-                    hover:text-white
-                    transition
-                  "
+                            absolute top-14 left-0
+                            w-full
+                            overflow-hidden
+                            rounded-3xl
+                            border border-black/10
+                            bg-white/95
+                            backdrop-blur-2xl
+                            shadow-[0_20px_60px_rgba(0,0,0,0.12)]
+                            z-50
+                          "
                         >
-                          View All Results
-                        </button>
-                      </motion.div>
-                    )}
+                          {results.map(
+                            (product, index) => (
+                              <Link
+                                key={product._id}
+                                href={`/collections/${product._id}`}
+                                onClick={() =>
+                                  closeSearch()
+                                }
+                                className={`
+                                  flex items-center gap-3
+                                  p-3
+                                  transition-all duration-200
+                                  ${
+                                    activeIndex ===
+                                    index
+                                      ? "bg-black text-white"
+                                      : "hover:bg-black/[0.03]"
+                                  }
+                                `}
+                              >
+                                <Image
+                                  src={
+                                    product.thumbnail
+                                  }
+                                  alt={product.title}
+                                  width={52}
+                                  height={52}
+                                  className="
+                                    h-12 w-12
+                                    rounded-xl
+                                    object-cover
+                                    shrink-0
+                                  "
+                                  unoptimized
+                                />
+
+                                <div className="min-w-0 flex-1">
+                                  <h4
+                                    className="
+                                      truncate
+                                      text-sm
+                                      font-medium
+                                    "
+                                  >
+                                    {product.title}
+                                  </h4>
+
+                                  <p
+                                    className={`
+                                      text-xs
+                                      ${
+                                        activeIndex ===
+                                        index
+                                          ? "text-white/60"
+                                          : "text-black/45"
+                                      }
+                                    `}
+                                  >
+                                    {
+                                      product.category
+                                    }
+                                  </p>
+                                </div>
+
+                                <span
+                                  className="
+                                    shrink-0
+                                    text-sm
+                                    font-semibold
+                                  "
+                                >
+                                  $
+                                  {product.price}
+                                </span>
+                              </Link>
+                            ),
+                          )}
+
+                          {/* VIEW ALL */}
+
+                          <button
+                            onClick={() =>
+                              handleSearch()
+                            }
+                            className="
+                              w-full
+                              border-t border-black/10
+                              py-3
+                              text-sm
+                              font-medium
+                              transition
+                              hover:bg-black
+                              hover:text-white
+                            "
+                          >
+                            View All Results
+                          </button>
+                        </motion.div>
+                      )}
                   </AnimatePresence>
 
-                  {/* ====================================================== */}
                   {/* EMPTY */}
-                  {/* ====================================================== */}
 
-                  {query.trim() && !loading && results.length === 0 && (
-                    <div
-                      className="
-                absolute top-12 left-0
-                w-full
-                bg-white
-                border border-black/10
-                rounded-2xl
-                shadow-2xl
-                p-5
-                text-center
-                text-sm
-                text-black/50
-                z-50
-              "
-                    >
-                      No products found
-                    </div>
-                  )}
+                  {query.trim() &&
+                    !loading &&
+                    results.length === 0 && (
+                      <div
+                        className="
+                          absolute top-14 left-0
+                          w-full
+                          rounded-3xl
+                          border border-black/10
+                          bg-white/95
+                          p-5
+                          text-center
+                          text-sm
+                          text-black/45
+                          shadow-[0_20px_60px_rgba(0,0,0,0.12)]
+                          z-50
+                        "
+                      >
+                        No products found
+                      </div>
+                    )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -812,61 +875,78 @@ export default function Navbar() {
           {/* CART */}
           {/* ====================================================== */}
 
-          <div
-            className="
-              relative cursor-pointer
-              hidden md:flex
-            "
+          <button
             onClick={() => router.push("/cart")}
+            className="
+              relative
+              hidden md:flex
+              items-center justify-center
+              w-10 h-10
+              rounded-full
+              hover:bg-black/5
+              transition
+            "
           >
             <ShoppingBag size={18} />
 
             {cart.length > 0 && (
               <span
                 className="
-                  absolute -top-2 -right-2
-                  bg-black text-white
-                  text-[10px]
-                  w-4 h-4
+                  absolute top-1 right-1
                   flex items-center justify-center
+                  min-w-[18px]
+                  h-[18px]
                   rounded-full
+                  bg-black
+                  px-1
+                  text-[10px]
+                  font-medium
+                  text-white
                 "
               >
                 {cart.length}
               </span>
             )}
-          </div>
+          </button>
 
           {/* ====================================================== */}
           {/* USER */}
           {/* ====================================================== */}
 
           <div
-            className="
-              relative hidden md:flex
-            "
             ref={dropdownRef}
+            className="relative hidden md:block"
           >
             {!user ? (
               <button
-                onClick={() => router.push("/auth")}
+                onClick={() =>
+                  router.push("/auth")
+                }
                 className="
-                  text-xs border
-                  px-3 py-1
+                  rounded-full
+                  border border-black/10
+                  px-4 py-2
+                  text-[11px]
+                  font-medium
+                  tracking-wider
+                  transition
                   hover:bg-black
                   hover:text-white
-                  transition
                 "
               >
                 LOGIN
               </button>
             ) : (
-              <div>
+              <>
                 <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  onClick={() =>
+                    setDropdownOpen(
+                      !dropdownOpen,
+                    )
+                  }
                   className="
-                    w-8 h-8
                     flex items-center justify-center
+                    w-10 h-10
                     rounded-full
                     hover:bg-black/5
                     transition
@@ -881,7 +961,7 @@ export default function Navbar() {
                       initial={{
                         opacity: 0,
                         y: -10,
-                        scale: 0.98,
+                        scale: 0.96,
                       }}
                       animate={{
                         opacity: 1,
@@ -891,64 +971,70 @@ export default function Navbar() {
                       exit={{
                         opacity: 0,
                         y: -10,
-                        scale: 0.98,
+                        scale: 0.96,
                       }}
                       transition={{
-                        duration: 0.2,
+                        duration: 0.18,
                       }}
                       className="
-                        absolute top-10 right-0 mt-3
-                        w-52
-                        bg-white/90
-                        backdrop-blur-xl
-                        border border-black/10
-                        shadow-2xl
-                        rounded-2xl
+                        absolute right-0 top-12
+                        w-56
                         overflow-hidden
+                        rounded-3xl
+                        border border-black/10
+                        bg-white/90
+                        backdrop-blur-2xl
+                        shadow-[0_20px_60px_rgba(0,0,0,0.12)]
                       "
                     >
                       <div className="p-2">
                         <button
                           onClick={() => {
-                            router.push("/dashboard");
+                            router.push(
+                              "/dashboard",
+                            );
 
-                            setDropdownOpen(false);
+                            setDropdownOpen(
+                              false,
+                            );
                           }}
                           className="
-                            w-full
-                            flex items-center gap-2
-                            px-3 py-2
+                            flex w-full items-center gap-3
+                            rounded-2xl
+                            px-4 py-3
                             text-sm
-                            hover:bg-black/10
-                            rounded-xl
                             transition
+                            hover:bg-black/[0.05]
                           "
                         >
-                          <LayoutDashboard size={14} />
+                          <LayoutDashboard
+                            size={16}
+                          />
+
                           Dashboard
                         </button>
 
                         <button
                           onClick={handleLogout}
                           className="
-                            w-full
-                            flex items-center gap-2
-                            px-3 py-2
+                            flex w-full items-center gap-3
+                            rounded-2xl
+                            px-4 py-3
                             text-sm
-                            hover:bg-red-50
-                            rounded-xl
                             text-red-500
                             transition
+                            hover:bg-red-50
                           "
                         >
-                          <LogOut size={14} />
+                          <LogOut size={16} />
+
                           Logout
                         </button>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+              </>
             )}
           </div>
         </div>

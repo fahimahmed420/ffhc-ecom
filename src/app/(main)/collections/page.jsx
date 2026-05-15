@@ -257,7 +257,7 @@ export default function Collections() {
   }
 
   return (
-    <section className="px-4 md:px-12 py-10 max-w-7xl mx-auto min-h-screen">
+    <section className="px-4 md:px-12 py-20 max-w-7xl mx-auto min-h-screen">
       {/* ====================================================== */}
       {/* HEADER */}
       {/* ====================================================== */}
