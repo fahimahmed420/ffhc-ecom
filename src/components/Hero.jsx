@@ -13,7 +13,7 @@ export default function Hero() {
 
       {/* Background Image - Mobile */}
       <Image
-        src="/hero-small.png"
+        src="/hero-mobile.png"
         fill
         priority
         sizes="100vw"
@@ -23,7 +23,7 @@ export default function Hero() {
 
       {/* Background Image - Desktop */}
       <Image
-        src="/hero-large.png"
+        src="/hero-pc.png"
         fill
         priority
         sizes="100vw"

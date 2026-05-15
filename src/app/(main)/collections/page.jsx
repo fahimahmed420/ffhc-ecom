@@ -202,7 +202,7 @@ export default function Collections() {
   // ======================================================
   if (initialLoading) {
     return (
-      <section className="px-4 md:px-12 py-10 max-w-7xl mx-auto min-h-screen animate-pulse">
+      <section className="px-4 md:px-12 py-20 max-w-7xl mx-auto min-h-screen animate-pulse">
         {/* HEADER */}
         <div className="mb-8 flex flex-row items-center justify-between gap-4">
           <div className="space-y-3">

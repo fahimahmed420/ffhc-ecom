@@ -39,7 +39,7 @@ export default function PriceComparison() {
 
     if (type === "wholesale") {
       window.open(
-        `https://wa.me/${WHATSAPP_NUMBER}`,
+        `https://wa.me/8801774433063`,
         "_blank"
       );
     }

@@ -50,6 +50,8 @@ export default function Navbar() {
 
   const [scrolled, setScrolled] = useState(false);
 
+  const [hideNavbar, setHideNavbar] = useState(false);
+
   // ======================================================
   // REFS
   // ======================================================
@@ -126,8 +128,25 @@ export default function Navbar() {
   // ======================================================
 
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      const currentScrollY = window.scrollY;
+
+      // background blur
+      setScrolled(currentScrollY > 20);
+
+      // hide on scroll down
+      if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        setHideNavbar(true);
+      }
+
+      // show on scroll up
+      else {
+        setHideNavbar(false);
+      }
+
+      lastScrollY = currentScrollY;
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -140,8 +159,7 @@ export default function Navbar() {
   // ======================================================
 
   useEffect(() => {
-    const stored =
-      JSON.parse(localStorage.getItem("recentSearches")) || [];
+    const stored = JSON.parse(localStorage.getItem("recentSearches")) || [];
 
     setRecentSearches(stored);
   }, []);
@@ -173,16 +191,11 @@ export default function Navbar() {
         ...recentSearches.filter((item) => item !== searchValue),
       ].slice(0, 6);
 
-      localStorage.setItem(
-        "recentSearches",
-        JSON.stringify(updated),
-      );
+      localStorage.setItem("recentSearches", JSON.stringify(updated));
 
       setRecentSearches(updated);
 
-      router.push(
-        `/collections?search=${encodeURIComponent(searchValue)}`,
-      );
+      router.push(`/collections?search=${encodeURIComponent(searchValue)}`);
 
       closeSearch();
     },
@@ -206,9 +219,7 @@ export default function Navbar() {
         setLoading(true);
 
         const res = await fetch(
-          `/api/products?search=${encodeURIComponent(
-            query,
-          )}&minimal=true`,
+          `/api/products?search=${encodeURIComponent(query)}&minimal=true`,
           {
             signal: controller.signal,
           },
@@ -251,31 +262,18 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
       }
 
-      if (
-        searchRef.current &&
-        !searchRef.current.contains(e.target)
-      ) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
         closeSearch();
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleOutsideClick,
-    );
+    document.addEventListener("mousedown", handleOutsideClick);
 
-    return () =>
-      document.removeEventListener(
-        "mousedown",
-        handleOutsideClick,
-      );
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [closeSearch]);
 
   // ======================================================
@@ -291,11 +289,7 @@ export default function Navbar() {
 
     window.addEventListener("keydown", handleEscape);
 
-    return () =>
-      window.removeEventListener(
-        "keydown",
-        handleEscape,
-      );
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [closeSearch]);
 
   // ======================================================
@@ -318,8 +312,8 @@ export default function Navbar() {
           opacity: 0,
         }}
         animate={{
-          y: 0,
-          opacity: 1,
+          y: hideNavbar ? -100 : 0,
+          opacity: hideNavbar ? 0.95 : 1,
         }}
         transition={{
           duration: 0.4,
@@ -375,15 +369,9 @@ export default function Navbar() {
             <Link
               key={item.path}
               href={item.path}
-              ref={(el) =>
-                (itemRefs.current[item.path] = el)
-              }
-              onMouseEnter={() =>
-                moveIndicator(item.path)
-              }
-              onMouseLeave={() =>
-                moveIndicator(pathname)
-              }
+              ref={(el) => (itemRefs.current[item.path] = el)}
+              onMouseEnter={() => moveIndicator(item.path)}
+              onMouseLeave={() => moveIndicator(pathname)}
               className={`
                 relative
                 py-2
@@ -427,10 +415,7 @@ export default function Navbar() {
           {/* SEARCH */}
           {/* ====================================================== */}
 
-          <div
-            ref={searchRef}
-            className="relative flex items-center"
-          >
+          <div ref={searchRef} className="relative flex items-center">
             {/* BUTTON */}
 
             <button
@@ -519,8 +504,7 @@ export default function Navbar() {
                   }}
                   animate={{
                     width:
-                      typeof window !== "undefined" &&
-                      window.innerWidth < 640
+                      typeof window !== "undefined" && window.innerWidth < 640
                         ? 220
                         : 340,
                     opacity: 1,
@@ -551,16 +535,12 @@ export default function Navbar() {
                     onKeyDown={(e) => {
                       if (e.key === "ArrowDown") {
                         setActiveIndex((prev) =>
-                          prev < results.length - 1
-                            ? prev + 1
-                            : prev,
+                          prev < results.length - 1 ? prev + 1 : prev,
                         );
                       }
 
                       if (e.key === "ArrowUp") {
-                        setActiveIndex((prev) =>
-                          prev > 0 ? prev - 1 : 0,
-                        );
+                        setActiveIndex((prev) => (prev > 0 ? prev - 1 : 0));
                       }
 
                       if (e.key === "Enter") {
@@ -594,10 +574,9 @@ export default function Navbar() {
 
                   {/* RECENT SEARCHES */}
 
-                  {!query &&
-                    recentSearches.length > 0 && (
-                      <div
-                        className="
+                  {!query && recentSearches.length > 0 && (
+                    <div
+                      className="
                           absolute top-14 left-0
                           w-full
                           rounded-3xl
@@ -608,28 +587,25 @@ export default function Navbar() {
                           shadow-[0_20px_60px_rgba(0,0,0,0.12)]
                           z-50
                         "
-                      >
-                        <p
-                          className="
+                    >
+                      <p
+                        className="
                             mb-3
                             text-[11px]
                             uppercase
                             tracking-widest
                             text-black/35
                           "
-                        >
-                          Recent Searches
-                        </p>
+                      >
+                        Recent Searches
+                      </p>
 
-                        <div className="flex flex-wrap gap-2">
-                          {recentSearches.map(
-                            (item) => (
-                              <button
-                                key={item}
-                                onClick={() =>
-                                  handleSearch(item)
-                                }
-                                className="
+                      <div className="flex flex-wrap gap-2">
+                        {recentSearches.map((item) => (
+                          <button
+                            key={item}
+                            onClick={() => handleSearch(item)}
+                            className="
                                   flex items-center gap-1.5
                                   rounded-full
                                   bg-black/[0.04]
@@ -639,16 +615,15 @@ export default function Navbar() {
                                   hover:bg-black
                                   hover:text-white
                                 "
-                              >
-                                <Clock3 size={12} />
+                          >
+                            <Clock3 size={12} />
 
-                                {item}
-                              </button>
-                            ),
-                          )}
-                        </div>
+                            {item}
+                          </button>
+                        ))}
                       </div>
-                    )}
+                    </div>
+                  )}
 
                   {/* LOADING */}
 
@@ -666,45 +641,43 @@ export default function Navbar() {
                       "
                     >
                       <div className="space-y-4">
-                        {[...Array(4)].map(
-                          (_, index) => (
-                            <div
-                              key={index}
-                              className="
+                        {[...Array(4)].map((_, index) => (
+                          <div
+                            key={index}
+                            className="
                                 flex items-center gap-3
                                 animate-pulse
                               "
-                            >
-                              <div
-                                className="
+                          >
+                            <div
+                              className="
                                   h-12 w-12
                                   rounded-xl
                                   bg-black/10
                                 "
-                              />
+                            />
 
-                              <div className="flex-1 space-y-2">
-                                <div
-                                  className="
+                            <div className="flex-1 space-y-2">
+                              <div
+                                className="
                                     h-3
                                     w-2/3
                                     rounded-full
                                     bg-black/10
                                   "
-                                />
+                              />
 
-                                <div
-                                  className="
+                              <div
+                                className="
                                     h-2
                                     w-1/3
                                     rounded-full
                                     bg-black/10
                                   "
-                                />
-                              </div>
+                              />
                             </div>
-                          ),
-                        )}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -712,25 +685,24 @@ export default function Navbar() {
                   {/* RESULTS */}
 
                   <AnimatePresence>
-                    {!loading &&
-                      results.length > 0 && (
-                        <motion.div
-                          initial={{
-                            opacity: 0,
-                            y: 10,
-                          }}
-                          animate={{
-                            opacity: 1,
-                            y: 0,
-                          }}
-                          exit={{
-                            opacity: 0,
-                            y: 10,
-                          }}
-                          transition={{
-                            duration: 0.2,
-                          }}
-                          className="
+                    {!loading && results.length > 0 && (
+                      <motion.div
+                        initial={{
+                          opacity: 0,
+                          y: 10,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                        }}
+                        exit={{
+                          opacity: 0,
+                          y: 10,
+                        }}
+                        transition={{
+                          duration: 0.2,
+                        }}
+                        className="
                             absolute top-14 left-0
                             w-full
                             overflow-hidden
@@ -741,92 +713,79 @@ export default function Navbar() {
                             shadow-[0_20px_60px_rgba(0,0,0,0.12)]
                             z-50
                           "
-                        >
-                          {results.map(
-                            (product, index) => (
-                              <Link
-                                key={product._id}
-                                href={`/collections/${product._id}`}
-                                onClick={() =>
-                                  closeSearch()
-                                }
-                                className={`
+                      >
+                        {results.map((product, index) => (
+                          <Link
+                            key={product._id}
+                            href={`/collections/${product._id}`}
+                            onClick={() => closeSearch()}
+                            className={`
                                   flex items-center gap-3
                                   p-3
                                   transition-all duration-200
                                   ${
-                                    activeIndex ===
-                                    index
+                                    activeIndex === index
                                       ? "bg-black text-white"
                                       : "hover:bg-black/[0.03]"
                                   }
                                 `}
-                              >
-                                <Image
-                                  src={
-                                    product.thumbnail
-                                  }
-                                  alt={product.title}
-                                  width={52}
-                                  height={52}
-                                  className="
+                          >
+                            <Image
+                              src={product.thumbnail}
+                              alt={product.title}
+                              width={52}
+                              height={52}
+                              className="
                                     h-12 w-12
                                     rounded-xl
                                     object-cover
                                     shrink-0
                                   "
-                                  unoptimized
-                                />
+                              unoptimized
+                            />
 
-                                <div className="min-w-0 flex-1">
-                                  <h4
-                                    className="
+                            <div className="min-w-0 flex-1">
+                              <h4
+                                className="
                                       truncate
                                       text-sm
                                       font-medium
                                     "
-                                  >
-                                    {product.title}
-                                  </h4>
+                              >
+                                {product.title}
+                              </h4>
 
-                                  <p
-                                    className={`
+                              <p
+                                className={`
                                       text-xs
                                       ${
-                                        activeIndex ===
-                                        index
+                                        activeIndex === index
                                           ? "text-white/60"
                                           : "text-black/45"
                                       }
                                     `}
-                                  >
-                                    {
-                                      product.category
-                                    }
-                                  </p>
-                                </div>
+                              >
+                                {product.category}
+                              </p>
+                            </div>
 
-                                <span
-                                  className="
+                            <span
+                              className="
                                     shrink-0
                                     text-sm
                                     font-semibold
                                   "
-                                >
-                                  $
-                                  {product.price}
-                                </span>
-                              </Link>
-                            ),
-                          )}
+                            >
+                              ${product.price}
+                            </span>
+                          </Link>
+                        ))}
 
-                          {/* VIEW ALL */}
+                        {/* VIEW ALL */}
 
-                          <button
-                            onClick={() =>
-                              handleSearch()
-                            }
-                            className="
+                        <button
+                          onClick={() => handleSearch()}
+                          className="
                               w-full
                               border-t border-black/10
                               py-3
@@ -836,20 +795,18 @@ export default function Navbar() {
                               hover:bg-black
                               hover:text-white
                             "
-                          >
-                            View All Results
-                          </button>
-                        </motion.div>
-                      )}
+                        >
+                          View All Results
+                        </button>
+                      </motion.div>
+                    )}
                   </AnimatePresence>
 
                   {/* EMPTY */}
 
-                  {query.trim() &&
-                    !loading &&
-                    results.length === 0 && (
-                      <div
-                        className="
+                  {query.trim() && !loading && results.length === 0 && (
+                    <div
+                      className="
                           absolute top-14 left-0
                           w-full
                           rounded-3xl
@@ -862,10 +819,10 @@ export default function Navbar() {
                           shadow-[0_20px_60px_rgba(0,0,0,0.12)]
                           z-50
                         "
-                      >
-                        No products found
-                      </div>
-                    )}
+                    >
+                      No products found
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -913,15 +870,10 @@ export default function Navbar() {
           {/* USER */}
           {/* ====================================================== */}
 
-          <div
-            ref={dropdownRef}
-            className="relative hidden md:block"
-          >
+          <div ref={dropdownRef} className="relative hidden md:block">
             {!user ? (
               <button
-                onClick={() =>
-                  router.push("/auth")
-                }
+                onClick={() => router.push("/auth")}
                 className="
                   rounded-full
                   border border-black/10
@@ -939,11 +891,7 @@ export default function Navbar() {
             ) : (
               <>
                 <button
-                  onClick={() =>
-                    setDropdownOpen(
-                      !dropdownOpen,
-                    )
-                  }
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="
                     flex items-center justify-center
                     w-10 h-10
@@ -990,13 +938,9 @@ export default function Navbar() {
                       <div className="p-2">
                         <button
                           onClick={() => {
-                            router.push(
-                              "/dashboard",
-                            );
+                            router.push("/dashboard");
 
-                            setDropdownOpen(
-                              false,
-                            );
+                            setDropdownOpen(false);
                           }}
                           className="
                             flex w-full items-center gap-3
@@ -1007,10 +951,7 @@ export default function Navbar() {
                             hover:bg-black/[0.05]
                           "
                         >
-                          <LayoutDashboard
-                            size={16}
-                          />
-
+                          <LayoutDashboard size={16} />
                           Dashboard
                         </button>
 
@@ -1027,7 +968,6 @@ export default function Navbar() {
                           "
                         >
                           <LogOut size={16} />
-
                           Logout
                         </button>
                       </div>

@@ -125,7 +125,7 @@ export default function CategoryPage() {
   // UI
   // ===============================
   return (
-    <section className="max-w-7xl mx-auto px-4 md:px-12 py-8">
+    <section className="max-w-7xl mx-auto px-4 md:px-12 py-20">
 
       {/* HEADER */}
       <div className="mb-6">
