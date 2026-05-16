@@ -33,7 +33,7 @@ export default function Categories() {
     },
     {
       name: "Stationery",
-      image: "/categories/stationery.png",
+      image: "/categories/stationery-pic.png",
     },
     {
       name: "Mother & Baby",
