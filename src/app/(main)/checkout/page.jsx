@@ -386,7 +386,7 @@ export default function CheckoutPage() {
 
   if (cartLoading || productLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
+      <div className="min-h-screen flex items-center justify-center text-gray-500 px-4 text-center">
         Loading checkout...
       </div>
     );
@@ -398,7 +398,7 @@ export default function CheckoutPage() {
 
   if (merged.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
+      <div className="min-h-screen flex items-center justify-center text-gray-500 px-4 text-center">
         Your cart is empty
       </div>
     );
@@ -412,13 +412,15 @@ export default function CheckoutPage() {
     <>
       <Toaster position="top-right" />
 
-      <section className="max-w-7xl mx-auto px-4 md:px-8 py-14 grid lg:grid-cols-2 gap-10">
+      <section className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8  py-20 grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-10">
         {/* LEFT */}
-        <div className="bg-white border border-gray-200 rounded-3xl p-6 md:p-8 shadow-sm">
-          <h2 className="text-3xl font-bold mb-8">Delivery Information</h2>
+        <div className="bg-white border border-gray-200 rounded-2xl lg:rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm order-2 lg:order-1">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">
+            Delivery Information
+          </h2>
 
           {/* BASIC INFO */}
-          <div className="grid md:grid-cols-2 gap-5 mb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-4 sm:mb-5">
             <input
               type="text"
               placeholder="Full Name"
@@ -429,7 +431,7 @@ export default function CheckoutPage() {
                   name: e.target.value,
                 })
               }
-              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black"
+              className="w-full border border-gray-300 bg-white text-black rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:ring-2 focus:ring-black text-sm sm:text-base"
             />
 
             <input
@@ -437,12 +439,12 @@ export default function CheckoutPage() {
               placeholder="Email Address"
               value={form.email}
               readOnly
-              className="w-full border border-gray-300 bg-gray-100 text-black rounded-2xl px-4 py-4 outline-none"
+              className="w-full border border-gray-300 bg-gray-100 text-black rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 outline-none text-sm sm:text-base"
             />
           </div>
 
           {/* PHONE */}
-          <div className="mb-5">
+          <div className="mb-4 sm:mb-5">
             <input
               type="tel"
               placeholder="Phone Number"
@@ -453,16 +455,16 @@ export default function CheckoutPage() {
                   phone: e.target.value,
                 })
               }
-              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black"
+              className="w-full border border-gray-300 bg-white text-black rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:ring-2 focus:ring-black text-sm sm:text-base"
             />
           </div>
 
           {/* ADDRESS */}
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             {/* DIVISION */}
             <select
               value={form.divisionId}
-              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black"
+              className="w-full border border-gray-300 bg-white text-black rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:ring-2 focus:ring-black text-sm sm:text-base"
               onChange={(e) => {
                 const selected = divisions.find((d) => d.id === e.target.value);
 
@@ -501,7 +503,7 @@ export default function CheckoutPage() {
             <select
               value={form.districtId}
               disabled={!districts.length}
-              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100"
+              className="w-full border border-gray-300 bg-white text-black rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100 text-sm sm:text-base"
               onChange={(e) => {
                 const selected = districts.find((d) => d.id === e.target.value);
 
@@ -536,7 +538,7 @@ export default function CheckoutPage() {
             <select
               value={form.upazilaId}
               disabled={!upazilas.length}
-              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100"
+              className="w-full border border-gray-300 bg-white text-black rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100 text-sm sm:text-base"
               onChange={(e) => {
                 const selected = upazilas.find((u) => u.id === e.target.value);
 
@@ -567,7 +569,7 @@ export default function CheckoutPage() {
             <select
               value={form.unionId}
               disabled={!unions.length}
-              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100"
+              className="w-full border border-gray-300 bg-white text-black rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100 text-sm sm:text-base"
               onChange={(e) => {
                 const selected = unions.find((u) => u.id === e.target.value);
 
@@ -591,7 +593,7 @@ export default function CheckoutPage() {
 
             {/* ADDRESS */}
             <textarea
-              rows={5}
+              rows={4}
               placeholder="House / Road / Area / Full Address"
               value={form.address}
               onChange={(e) =>
@@ -600,26 +602,31 @@ export default function CheckoutPage() {
                   address: e.target.value,
                 })
               }
-              className="w-full border border-gray-300 bg-white text-black rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-black resize-none"
+              className="w-full border border-gray-300 bg-white text-black rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:ring-2 focus:ring-black resize-none text-sm sm:text-base"
             />
           </div>
 
           {/* COD INFO */}
-          <div className="mt-6 p-5 rounded-2xl border border-yellow-200 bg-yellow-50 text-sm text-yellow-900">
+          <div className="mt-5 sm:mt-6 p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-yellow-200 bg-yellow-50 text-sm text-yellow-900 leading-relaxed">
             💳 Online payment is currently unavailable. Only{" "}
             <span className="font-bold">Cash on Delivery</span> is supported.
           </div>
         </div>
 
         {/* RIGHT */}
-        <div className="bg-white border border-gray-200 rounded-3xl p-6 shadow-sm h-fit sticky top-24">
-          <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
+        <div className="bg-white border border-gray-200 rounded-2xl lg:rounded-3xl p-4 sm:p-6 shadow-sm h-fit lg:sticky lg:top-24 order-1 lg:order-2">
+          <h2 className="text-xl sm:text-2xl font-bold mb-5 sm:mb-6">
+            Order Summary
+          </h2>
 
           {/* PRODUCTS */}
-          <div className="space-y-5 max-h-[450px] overflow-y-auto pr-2">
+          <div className="space-y-4 sm:space-y-5 max-h-[350px] sm:max-h-[450px] overflow-y-auto pr-1 sm:pr-2">
             {merged.map((item) => (
-              <div key={item._id} className="flex gap-4">
-                <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-gray-200 bg-white">
+              <div
+                key={item._id}
+                className="flex gap-3 sm:gap-4 border-b border-gray-100 pb-4 last:border-none"
+              >
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200 bg-white flex-shrink-0">
                   <Image
                     src={item.images?.[0] || item.thumbnail || "/fallback.png"}
                     alt={item.title}
@@ -629,11 +636,15 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold line-clamp-2">{item.title}</h3>
+                  <h3 className="font-semibold line-clamp-2 text-sm sm:text-base leading-snug">
+                    {item.title}
+                  </h3>
 
-                  <p className="text-sm text-gray-500 mt-1">Qty: {item.qty}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                    Qty: {item.qty}
+                  </p>
 
-                  <p className="font-bold mt-2">
+                  <p className="font-bold mt-2 text-sm sm:text-base">
                     ৳{(item.discountedPrice * item.qty).toFixed(0)}
                   </p>
                 </div>
@@ -642,20 +653,20 @@ export default function CheckoutPage() {
           </div>
 
           {/* COUPON */}
-          <div className="mt-6">
-            <div className="flex gap-2">
+          <div className="mt-5 sm:mt-6">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 placeholder="Coupon code"
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value)}
-                className="flex-1 border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+                className="flex-1 border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-black text-sm sm:text-base"
               />
 
               <button
                 onClick={applyCoupon}
                 disabled={couponLoading || !couponCode.trim()}
-                className="bg-black text-white px-5 rounded-xl font-semibold disabled:opacity-50"
+                className="bg-black text-white px-5 py-3 rounded-xl font-semibold disabled:opacity-50 text-sm sm:text-base w-full sm:w-auto"
               >
                 {couponLoading ? "..." : "Apply"}
               </button>
@@ -663,21 +674,21 @@ export default function CheckoutPage() {
           </div>
 
           {/* TOTALS */}
-          <div className="mt-8 space-y-4 border-t pt-6">
-            <div className="flex justify-between text-gray-600">
+          <div className="mt-6 sm:mt-8 space-y-3 sm:space-y-4 border-t pt-5 sm:pt-6">
+            <div className="flex justify-between text-gray-600 text-sm sm:text-base">
               <span>Subtotal</span>
 
               <span>৳{subtotal.toFixed(0)}</span>
             </div>
 
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between text-gray-600 text-sm sm:text-base">
               <span>Shipping</span>
 
               <span>৳{shipping}</span>
             </div>
 
             {discount > 0 && (
-              <div className="flex justify-between text-green-600">
+              <div className="flex justify-between text-green-600 text-sm sm:text-base">
                 <span>Discount</span>
 
                 <span>
@@ -687,7 +698,7 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            <div className="flex justify-between text-2xl font-black border-t pt-4">
+            <div className="flex justify-between text-xl sm:text-2xl font-black border-t pt-4">
               <span>Total</span>
 
               <span>৳{total.toFixed(0)}</span>
@@ -698,7 +709,7 @@ export default function CheckoutPage() {
           <button
             disabled={!isValid || loading}
             onClick={handleOrder}
-            className="w-full mt-8 bg-black text-white py-4 rounded-2xl font-semibold hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full mt-6 sm:mt-8 bg-black text-white py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-semibold hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             {loading ? "Placing Order..." : "Place Order (COD)"}
           </button>
