@@ -53,7 +53,7 @@ export default function Categories() {
     <section className="px-6 md:px-12 py-10 md:py-20 max-w-7xl mx-auto">
       {/* Header */}
       <div className="text-center mb-10">
-        <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text">
+        <h2 className="text-3xl md:text-4xl py-1 font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-transparent bg-clip-text">
           Browse Categories
         </h2>
 

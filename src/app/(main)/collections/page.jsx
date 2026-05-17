@@ -16,6 +16,7 @@ import { toast } from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
 
 import { useCart } from "@/context/CartContext";
+import ModernSlider from "@/components/ModernSlider";
 
 export default function Collections() {
   const searchParams = useSearchParams();
@@ -145,22 +146,22 @@ export default function Collections() {
   // ======================================================
   // FILTER / SEARCH / SORT CHANGE
   // ======================================================
-useEffect(() => {
-  setProducts([]);
+  useEffect(() => {
+    setProducts([]);
 
-  setHasMore(true);
+    setHasMore(true);
 
-  setInitialLoading(true);
+    setInitialLoading(true);
 
-  fetchingRef.current = false;
+    fetchingRef.current = false;
 
-  setPage(0);
+    setPage(0);
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth",
-  });
-}, [selectedCategory, sortOrder, search]);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, [selectedCategory, sortOrder, search]);
 
   // ======================================================
   // PAGE CHANGE
@@ -269,6 +270,9 @@ useEffect(() => {
 
   return (
     <section className="px-4 md:px-12 py-20 max-w-7xl mx-auto min-h-screen">
+      <div className="mb-10">
+        <ModernSlider />
+      </div>
       {/* ====================================================== */}
       {/* HEADER */}
       {/* ====================================================== */}

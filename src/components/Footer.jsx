@@ -61,14 +61,14 @@ We aim to provide a smooth and transparent shopping experience for everyone.
       description: `
 We provide nationwide delivery across Bangladesh.
 
-• Orders inside Dhaka are usually delivered within 1–3 working days.
-• Outside Dhaka deliveries may take 3–7 working days.
+• Orders inside Dhaka are usually delivered within 1 working day.
+• Outside Dhaka deliveries may take 1-2 working days.
 • Customers receive updates regarding shipment progress.
 • Products are carefully packaged to ensure safe delivery.
 • International sourcing items may require additional processing time.
 
 Current shop location:
-Savar, Dhaka, Bangladesh.
+Dhaka, Bangladesh.
       `,
     },
 
@@ -85,7 +85,7 @@ Need assistance? Our support team is always available to help you.
 • Payment assistance
 
 Shop Location:
-Savar, Dhaka, Bangladesh
+Dhaka, Bangladesh
 
 Customer Support Number:
 01774433063
