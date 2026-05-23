@@ -1,12 +1,91 @@
 export const runtime = "nodejs";
 
 import { ObjectId } from "mongodb";
+
 import clientPromise from "@/lib/mongodb";
 
 import { generateOrderId } from "@/utils/orderId";
 import { generateInvoiceHTML } from "@/lib/invoice";
 import { generatePDF } from "@/lib/pdf";
 import { createTransporter } from "@/lib/mail";
+
+// ======================================
+// GET USER ORDERS
+// ======================================
+export async function GET(req) {
+  try {
+    const client = await clientPromise;
+
+    const db = client.db("ecommerce");
+
+    const { searchParams } = new URL(req.url);
+
+    const email = searchParams.get("email");
+
+    const requestEmail =
+      req.headers.get("x-user-email");
+
+    // ======================================
+    // VALIDATION
+    // ======================================
+    if (!email || !requestEmail) {
+      return Response.json(
+        {
+          success: false,
+          message: "Unauthorized",
+        },
+        {
+          status: 401,
+        },
+      );
+    }
+
+    // ======================================
+    // USER CAN ONLY ACCESS OWN ORDERS
+    // ======================================
+    if (email !== requestEmail) {
+      return Response.json(
+        {
+          success: false,
+          message: "Forbidden",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
+    // ======================================
+    // GET ORDERS
+    // ======================================
+    const orders = await db
+      .collection("orders")
+      .find({
+        "customer.email": email,
+      })
+      .sort({
+        createdAt: -1,
+      })
+      .toArray();
+
+    return Response.json({
+      success: true,
+      orders,
+    });
+  } catch (err) {
+    console.error("GET USER ORDERS ERROR:", err);
+
+    return Response.json(
+      {
+        success: false,
+        message: "Server error",
+      },
+      {
+        status: 500,
+      },
+    );
+  }
+}
 
 // ======================================
 // CREATE ORDER
@@ -35,7 +114,7 @@ export async function POST(req) {
         },
         {
           status: 400,
-        }
+        },
       );
     }
 
@@ -47,7 +126,7 @@ export async function POST(req) {
         },
         {
           status: 400,
-        }
+        },
       );
     }
 
@@ -58,11 +137,14 @@ export async function POST(req) {
 
     const db = client.db("ecommerce");
 
-    const productCollection = db.collection("products");
+    const productCollection =
+      db.collection("products");
 
-    const orderCollection = db.collection("orders");
+    const orderCollection =
+      db.collection("orders");
 
-    const couponCollection = db.collection("coupons");
+    const couponCollection =
+      db.collection("coupons");
 
     // ======================================
     // VALIDATE PRODUCTS
@@ -82,15 +164,16 @@ export async function POST(req) {
           },
           {
             status: 400,
-          }
+          },
         );
       }
 
       const productId = new ObjectId(rawId);
 
-      const product = await productCollection.findOne({
-        _id: productId,
-      });
+      const product =
+        await productCollection.findOne({
+          _id: productId,
+        });
 
       if (!product) {
         return Response.json(
@@ -100,7 +183,7 @@ export async function POST(req) {
           },
           {
             status: 404,
-          }
+          },
         );
       }
 
@@ -114,11 +197,10 @@ export async function POST(req) {
           },
           {
             status: 400,
-          }
+          },
         );
       }
 
-      // REAL PRICE FROM DB
       const price =
         product.discountPrice > 0
           ? Number(product.discountPrice)
@@ -126,10 +208,8 @@ export async function POST(req) {
 
       subtotal += price * qty;
 
-      // SAVE SNAPSHOT
       orderItems.push({
         productId: product._id,
-
         title: product.title,
 
         thumbnail:
@@ -148,13 +228,17 @@ export async function POST(req) {
     // ======================================
     // TOTALS
     // ======================================
-    const finalShipping = Number(shipping) || 0;
+    const finalShipping =
+      Number(shipping) || 0;
 
-    const finalDiscount = Number(discount) || 0;
+    const finalDiscount =
+      Number(discount) || 0;
 
     const total = Math.max(
       0,
-      subtotal + finalShipping - finalDiscount
+      subtotal +
+        finalShipping -
+        finalDiscount,
     );
 
     // ======================================
@@ -211,12 +295,12 @@ export async function POST(req) {
           $set: {
             updatedAt: new Date(),
           },
-        }
+        },
       );
     }
 
     // ======================================
-    // UPDATE COUPON USAGE
+    // UPDATE COUPON
     // ======================================
     if (couponCode) {
       await couponCollection.updateOne(
@@ -227,22 +311,25 @@ export async function POST(req) {
           $inc: {
             usedCount: 1,
           },
-        }
+        },
       );
     }
 
     // ======================================
     // GENERATE PDF
     // ======================================
-    const html = await generateInvoiceHTML(orderData);
+    const html =
+      await generateInvoiceHTML(orderData);
 
-    const pdfBuffer = await generatePDF(html);
+    const pdfBuffer =
+      await generatePDF(html);
 
     // ======================================
     // SEND EMAIL
     // ======================================
     try {
-      const transporter = createTransporter();
+      const transporter =
+        createTransporter();
 
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
@@ -277,7 +364,10 @@ export async function POST(req) {
         ],
       });
     } catch (mailError) {
-      console.error("MAIL ERROR:", mailError);
+      console.error(
+        "MAIL ERROR:",
+        mailError,
+      );
     }
 
     // ======================================
@@ -288,7 +378,8 @@ export async function POST(req) {
 
       orderId,
 
-      message: "Order placed successfully, plz check email 🎉",
+      message:
+        "Order placed successfully 🎉",
     });
   } catch (err) {
     console.error("ORDER ERROR:", err);
@@ -301,7 +392,7 @@ export async function POST(req) {
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }

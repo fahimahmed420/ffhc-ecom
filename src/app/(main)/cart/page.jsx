@@ -161,7 +161,7 @@ export default function CartPage() {
   ====================================================== */
 
   return (
-    <section className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-6 md:py-10 pb-56 lg:pb-10">
+    <section className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-20 pb-56 lg:pb-10">
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 mb-8">
         <div>

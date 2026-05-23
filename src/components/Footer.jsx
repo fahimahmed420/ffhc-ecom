@@ -228,7 +228,7 @@ Customer Support Number:
                         {/* Location */}
                         <div className="flex items-start gap-3 text-gray-700 text-sm">
                           <MapPin size={18} className="mt-1 shrink-0" />
-                          <span>Savar, Dhaka, Bangladesh</span>
+                          <span>Dhaka, Bangladesh</span>
                         </div>
 
                         {/* Buttons */}
