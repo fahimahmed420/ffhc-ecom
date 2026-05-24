@@ -7,11 +7,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 
-import {
-  loginUser,
-  registerUser,
-  loginWithGoogle,
-} from "@/lib/firebase/auth";
+import { loginUser, registerUser, loginWithGoogle } from "@/lib/firebase/auth";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -29,41 +25,30 @@ export default function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const redirectPath =
-    searchParams.get("from") || "/";
+  const redirectPath = searchParams.get("from") || "/";
 
   // ======================================================
   // SAVE USER TO DATABASE
   // ======================================================
 
-  const saveUserToDB = async (
-    user,
-    name = ""
-  ) => {
+  const saveUserToDB = async (user, name = "") => {
     try {
       await fetch("/api/users", {
         method: "POST",
 
         headers: {
-          "Content-Type":
-            "application/json",
+          "Content-Type": "application/json",
         },
 
         body: JSON.stringify({
           uid: user.uid,
           email: user.email,
-          name:
-            name ||
-            user.displayName ||
-            "",
+          name: name || user.displayName || "",
           photo: user.photoURL || "",
         }),
       });
     } catch (err) {
-      console.error(
-        "DB save error:",
-        err
-      );
+      console.error("DB save error:", err);
     }
   };
 
@@ -116,29 +101,20 @@ export default function AuthPage() {
     let newErrors = {};
 
     if (!form.email.includes("@")) {
-      newErrors.email =
-        "Enter a valid email";
+      newErrors.email = "Enter a valid email";
     }
 
-    if (
-      form.password.length < 6
-    ) {
-      newErrors.password =
-        "Minimum 6 characters";
+    if (form.password.length < 6) {
+      newErrors.password = "Minimum 6 characters";
     }
 
     if (!isLogin) {
       if (!form.name.trim()) {
-        newErrors.name =
-          "Name required";
+        newErrors.name = "Name required";
       }
 
-      if (
-        form.password !==
-        form.confirm
-      ) {
-        newErrors.confirm =
-          "Passwords do not match";
+      if (form.password !== form.confirm) {
+        newErrors.confirm = "Passwords do not match";
       }
     }
 
@@ -152,18 +128,12 @@ export default function AuthPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const validationErrors =
-      validate();
+    const validationErrors = validate();
 
     setErrors(validationErrors);
 
-    if (
-      Object.keys(validationErrors)
-        .length > 0
-    ) {
-      toast.error(
-        "Please fix the form errors."
-      );
+    if (Object.keys(validationErrors).length > 0) {
+      toast.error("Please fix the form errors.");
 
       return;
     }
@@ -175,42 +145,25 @@ export default function AuthPage() {
 
       // LOGIN
       if (isLogin) {
-        userCredential =
-          await loginUser(
-            form.email,
-            form.password
-          );
+        userCredential = await loginUser(form.email, form.password);
 
-        toast.success(
-          "Logged in successfully!"
-        );
+        toast.success("Logged in successfully!");
       }
 
       // SIGNUP
       else {
-        userCredential =
-          await registerUser(
-            form.email,
-            form.password
-          );
+        userCredential = await registerUser(form.email, form.password);
 
-        await saveUserToDB(
-          userCredential.user,
-          form.name
-        );
+        await saveUserToDB(userCredential.user, form.name);
 
-        toast.success(
-          "Account created successfully!"
-        );
+        toast.success("Account created successfully!");
       }
 
       router.push(redirectPath);
     } catch (err) {
       console.error(err);
 
-      toast.error(
-        getErrorMessage(err.code)
-      );
+      toast.error(getErrorMessage(err.code));
     } finally {
       setLoading(false);
     }
@@ -220,31 +173,25 @@ export default function AuthPage() {
   // GOOGLE LOGIN
   // ======================================================
 
-  const handleGoogleLogin =
-    async () => {
-      try {
-        setLoading(true);
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
 
-        const user =
-          await loginWithGoogle();
+      const user = await loginWithGoogle();
 
-        await saveUserToDB(user);
+      await saveUserToDB(user);
 
-        toast.success(
-          "Logged in with Google!"
-        );
+      toast.success("Logged in with Google!");
 
-        router.push(redirectPath);
-      } catch (err) {
-        console.error(err);
+      router.push(redirectPath);
+    } catch (err) {
+      console.error(err);
 
-        toast.error(
-          getErrorMessage(err.code)
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+      toast.error(getErrorMessage(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center text-white overflow-hidden">
@@ -255,31 +202,31 @@ export default function AuthPage() {
           style: {
             background: "#111",
             color: "#fff",
-            border:
-              "1px solid rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255,255,255,0.1)",
           },
         }}
       />
 
       {/* Back */}
       <button
-        onClick={() =>
-          router.push("/")
-        }
+        onClick={() => router.push("/")}
         className="absolute top-6 left-6 z-20 px-4 py-2 text-xs tracking-widest border border-white/40 backdrop-blur-md hover:bg-white hover:text-black transition"
       >
         ← HOME
       </button>
 
       {/* Background */}
-      <Image
-        src="/a.jpg"
-        alt="Auth Background"
-        fill
-        sizes="100vw"
-        priority
-        className="object-cover"
-      />
+      {/* Modern Gradient Background */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#000000]" />
+
+      {/* Soft animated glow layers */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-purple-500/30 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-blue-500/30 blur-[120px] rounded-full animate-pulse" />
+      </div>
+
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-black/40" />
 
       <div className="absolute inset-0 bg-black/50" />
 
@@ -302,26 +249,18 @@ export default function AuthPage() {
           {/* Toggle */}
           <div className="flex mb-6 text-sm tracking-widest border border-white/20 rounded overflow-hidden">
             <button
-              onClick={() =>
-                setIsLogin(true)
-              }
+              onClick={() => setIsLogin(true)}
               className={`w-1/2 py-3 transition ${
-                isLogin
-                  ? "bg-white text-black"
-                  : "text-white/70"
+                isLogin ? "bg-white text-black" : "text-white/70"
               }`}
             >
               LOGIN
             </button>
 
             <button
-              onClick={() =>
-                setIsLogin(false)
-              }
+              onClick={() => setIsLogin(false)}
               className={`w-1/2 py-3 transition ${
-                !isLogin
-                  ? "bg-white text-black"
-                  : "text-white/70"
+                !isLogin ? "bg-white text-black" : "text-white/70"
               }`}
             >
               SIGN UP
@@ -331,14 +270,8 @@ export default function AuthPage() {
           {/* Form */}
           <AnimatePresence mode="wait">
             <motion.form
-              key={
-                isLogin
-                  ? "login"
-                  : "signup"
-              }
-              onSubmit={
-                handleSubmit
-              }
+              key={isLogin ? "login" : "signup"}
+              onSubmit={handleSubmit}
               initial={{
                 opacity: 0,
                 x: 40,
@@ -367,19 +300,12 @@ export default function AuthPage() {
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        name: e.target
-                          .value,
+                        name: e.target.value,
                       })
                     }
                   />
 
-                  {errors.name && (
-                    <p className="error">
-                      {
-                        errors.name
-                      }
-                    </p>
-                  )}
+                  {errors.name && <p className="error">{errors.name}</p>}
                 </div>
               )}
 
@@ -393,20 +319,12 @@ export default function AuthPage() {
                   onChange={(e) =>
                     setForm({
                       ...form,
-                      email:
-                        e.target
-                          .value,
+                      email: e.target.value,
                     })
                   }
                 />
 
-                {errors.email && (
-                  <p className="error">
-                    {
-                      errors.email
-                    }
-                  </p>
-                )}
+                {errors.email && <p className="error">{errors.email}</p>}
               </div>
 
               {/* Password */}
@@ -415,26 +333,16 @@ export default function AuthPage() {
                   type="password"
                   placeholder="PASSWORD"
                   className="input"
-                  value={
-                    form.password
-                  }
+                  value={form.password}
                   onChange={(e) =>
                     setForm({
                       ...form,
-                      password:
-                        e.target
-                          .value,
+                      password: e.target.value,
                     })
                   }
                 />
 
-                {errors.password && (
-                  <p className="error">
-                    {
-                      errors.password
-                    }
-                  </p>
-                )}
+                {errors.password && <p className="error">{errors.password}</p>}
               </div>
 
               {/* Confirm Password */}
@@ -444,26 +352,16 @@ export default function AuthPage() {
                     type="password"
                     placeholder="CONFIRM PASSWORD"
                     className="input"
-                    value={
-                      form.confirm
-                    }
+                    value={form.confirm}
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        confirm:
-                          e.target
-                            .value,
+                        confirm: e.target.value,
                       })
                     }
                   />
 
-                  {errors.confirm && (
-                    <p className="error">
-                      {
-                        errors.confirm
-                      }
-                    </p>
-                  )}
+                  {errors.confirm && <p className="error">{errors.confirm}</p>}
                 </div>
               )}
 
@@ -474,10 +372,7 @@ export default function AuthPage() {
                 className="w-full py-3 border border-white tracking-widest hover:bg-white hover:text-black transition disabled:opacity-50"
               >
                 {loading ? (
-                  <Loader2
-                    className="animate-spin mx-auto"
-                    size={18}
-                  />
+                  <Loader2 className="animate-spin mx-auto" size={18} />
                 ) : isLogin ? (
                   "LOGIN"
                 ) : (
@@ -489,9 +384,7 @@ export default function AuthPage() {
               <div className="flex items-center gap-3 my-4">
                 <div className="flex-1 h-px bg-white/20" />
 
-                <span className="text-xs text-white/60">
-                  OR
-                </span>
+                <span className="text-xs text-white/60">OR</span>
 
                 <div className="flex-1 h-px bg-white/20" />
               </div>
@@ -500,20 +393,18 @@ export default function AuthPage() {
               <button
                 type="button"
                 disabled={loading}
-                onClick={
-                  handleGoogleLogin
-                }
+                onClick={handleGoogleLogin}
                 className="w-full flex items-center justify-center gap-3 py-3 border border-white/30 hover:bg-white hover:text-black transition disabled:opacity-50"
               >
-                <img
+                <Image
                   src="/google-logo.svg"
                   alt="Google"
-                  className="w-5 h-5"
+                  width={20}
+                  height={20}
                 />
 
                 <span className="tracking-widest text-sm">
-                  CONTINUE WITH
-                  GOOGLE
+                  CONTINUE WITH GOOGLE
                 </span>
               </button>
             </motion.form>
@@ -526,25 +417,14 @@ export default function AuthPage() {
         .input {
           width: 100%;
           background: transparent;
-          border: 1px solid
-            rgba(
-              255,
-              255,
-              255,
-              0.2
-            );
+          border: 1px solid rgba(255, 255, 255, 0.2);
           padding: 12px;
           color: white;
           outline: none;
         }
 
         .input::placeholder {
-          color: rgba(
-            255,
-            255,
-            255,
-            0.5
-          );
+          color: rgba(255, 255, 255, 0.5);
         }
 
         .input:focus {
