@@ -1,158 +1,126 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { FaStore, FaTruck } from "react-icons/fa";
+import { ShoppingBag, Building2, CheckCircle2, MessageCircleMore, ArrowRight } from "lucide-react";
+
+const MODES = [
+  {
+    icon: ShoppingBag,
+    iconBg: "bg-gray-900",
+    bg: "bg-gray-50",
+    border: "border-gray-100",
+    label: "For Everyone",
+    title: "Buy as Customer",
+    desc: "Shop our store and get anything delivered to your door across Bangladesh.",
+    points: [
+      "Instant checkout, no minimum order",
+      "Nationwide Cash on Delivery",
+      "Easy 7-day returns",
+      "5,000+ products online",
+    ],
+    cta: { label: "Browse Products", href: "/collections", style: "bg-gray-900 text-white hover:bg-gray-700" },
+    external: false,
+  },
+  {
+    icon: Building2,
+    iconBg: "bg-white/15",
+    bg: "bg-gray-900",
+    border: "border-gray-800",
+    label: "For Businesses",
+    title: "Buy in Bulk",
+    desc: "Wholesale pricing, exclusive products, and support for resellers and shops.",
+    points: [
+      "Special bulk & wholesale pricing",
+      "Exclusive products not listed online",
+      "Dedicated account support",
+      "Order large quantities anytime",
+    ],
+    cta: {
+      label: "Contact on WhatsApp",
+      href: "https://wa.me/8801774433063?text=Hello%20I%20want%20to%20buy%20in%20bulk",
+      style: "bg-green-500 text-white hover:bg-green-400",
+    },
+    external: true,
+    dark: true,
+  },
+];
 
 export default function PriceComparison() {
-  const [activeModal, setActiveModal] = useState(null);
-
-  const WHATSAPP_NUMBER = "8801XXXXXXXXX"; // replace
-
-  const options = [
-    {
-      title: "Buy as Customer",
-      subtitle: "Retail Shopping",
-      icon: <FaStore size={18} />,
-      description:
-        "Perfect for personal use. Browse thousands of products and order instantly with fast delivery.",
-      highlight: "Instant checkout • No minimum order",
-      action: "Browse Now",
-      type: "retail",
-    },
-    {
-      title: "Buy in Bulk",
-      subtitle: "Wholesale Access",
-      icon: <FaTruck size={18} />,
-      description:
-        "Best for resellers, shops, and businesses. Get special pricing and bulk deals directly from us.",
-      highlight: "Save more on bulk orders • Business pricing",
-      action: "Contact on WhatsApp",
-      type: "wholesale",
-    },
-  ];
-
-  const handleAction = (type) => {
-    if (type === "retail") {
-      window.location.href = "/collections";
-    }
-
-    if (type === "wholesale") {
-      window.open(
-        `https://wa.me/8801774433063`,
-        "_blank"
-      );
-    }
-  };
-
   return (
-    <section className="px-6 md:px-12 py-10 md:py-20 max-w-7xl mx-auto">
-      {/* HEADER */}
-      <div className="text-center mb-8 md:mb-12">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-transparent bg-clip-text">
-          Choose Your Shopping Mode
-        </h2>
-        <p className="text-sm text-gray-500 mt-2">
-          Shop as a customer or buy as a business
-        </p>
-      </div>
+    <section className="py-10 md:py-16 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
 
-      {/* CARDS */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {options.map((opt, idx) => (
-          <motion.div
-            key={idx}
-            whileHover={{ y: -8, scale: 1.02 }}
-            transition={{ type: "spring", stiffness: 200 }}
-            onClick={() => setActiveModal(opt)}
-            className="
-              group cursor-pointer relative
-              rounded-2xl p-8
-              bg-white border border-gray-100
-              shadow-sm hover:shadow-2xl
-              transition-all duration-300
-              overflow-hidden
-            "
-          >
-            {/* ICON + TITLE */}
-            <div className="flex items-center gap-3 mb-5 text-gray-600">
-              <div className="text-indigo-500">{opt.icon}</div>
-              <div>
-                <h3 className="text-xs tracking-widest text-gray-400">
-                  {opt.subtitle}
-                </h3>
-                <p className="text-sm font-medium">{opt.title}</p>
+        {/* Header */}
+        <div className="mb-7 md:mb-12 md:text-center">
+          <p className="text-[11px] font-bold text-orange-500 uppercase tracking-widest mb-1.5">How to Shop</p>
+          <h2 className="text-2xl font-black text-gray-900 leading-tight">
+            Choose Your<br className="sm:hidden" /> Shopping Mode
+          </h2>
+          <p className="text-gray-400 text-sm mt-2 max-w-sm md:mx-auto leading-relaxed">
+            Whether you&apos;re buying for yourself or running a business — we have a plan for you.
+          </p>
+        </div>
+
+        {/* Mobile: vertical stacked rows */}
+        <div className="flex flex-col gap-3 md:hidden">
+          {MODES.map(({ icon: Icon, iconBg, bg, border, label, title, desc, cta, external, dark }) => (
+            <div key={title} className={`${bg} border ${border} rounded-2xl p-4 flex items-start gap-4`}>
+              {/* Icon */}
+              <div className={`${iconBg} w-11 h-11 rounded-xl flex items-center justify-center shrink-0`}>
+                <Icon size={20} className={dark ? "text-white" : "text-white"} />
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${dark ? "text-gray-400" : "text-gray-400"}`}>{label}</p>
+                <h3 className={`text-sm font-bold leading-snug mb-1 ${dark ? "text-white" : "text-gray-900"}`}>{title}</h3>
+                <p className={`text-xs leading-relaxed mb-3 ${dark ? "text-gray-400" : "text-gray-500"}`}>{desc}</p>
+                <a
+                  href={cta.href}
+                  target={external ? "_blank" : undefined}
+                  rel={external ? "noopener noreferrer" : undefined}
+                  className={`inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl transition ${cta.style}`}
+                >
+                  {external && <MessageCircleMore size={13} />}
+                  {!external && <ArrowRight size={13} />}
+                  {cta.label}
+                </a>
               </div>
             </div>
+          ))}
+        </div>
 
-            {/* HIGHLIGHT */}
-            <p className="text-xs text-indigo-500 mb-3 font-medium">
-              {opt.highlight}
-            </p>
-
-            {/* DESCRIPTION */}
-            <p className="text-sm text-gray-500 leading-relaxed">
-              {opt.description}
-            </p>
-
-            {/* hover glow line */}
-            <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-indigo-500 to-pink-500 group-hover:w-full transition-all duration-300" />
-          </motion.div>
-        ))}
-      </div>
-
-      {/* MODAL */}
-      <AnimatePresence>
-        {activeModal && (
-          <>
-            {/* overlay */}
-            <motion.div
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setActiveModal(null)}
-            />
-
-            {/* modal */}
-            <motion.div
-              className="fixed inset-0 flex items-center justify-center z-50 px-6"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-            >
-              <div className="bg-white max-w-md w-full p-8 rounded-2xl shadow-xl relative">
-                
-                <h3 className="text-sm tracking-widest text-gray-500 mb-2">
-                  {activeModal.subtitle}
-                </h3>
-
-                <h2 className="text-xl font-semibold mb-4">
-                  {activeModal.title}
-                </h2>
-
-                <p className="text-sm text-gray-600 leading-relaxed mb-6">
-                  {activeModal.description}
-                </p>
-
-                <button
-                  onClick={() => handleAction(activeModal.type)}
-                  className="w-full py-3 text-sm tracking-widest bg-black text-white rounded-xl hover:bg-gray-800 transition"
-                >
-                  {activeModal.action}
-                </button>
-
-                <button
-                  onClick={() => setActiveModal(null)}
-                  className="absolute top-4 right-5 text-gray-400 hover:text-black"
-                >
-                  ✕
-                </button>
+        {/* Desktop: two-column card layout */}
+        <div className="hidden md:grid md:grid-cols-2 gap-5 max-w-4xl mx-auto">
+          {MODES.map(({ icon: Icon, iconBg, bg, border, label, title, desc, points, cta, external, dark }) => (
+            <div key={title} className={`${bg} border-2 ${border} rounded-3xl p-7 flex flex-col`}>
+              <div className={`w-12 h-12 ${iconBg} rounded-2xl flex items-center justify-center mb-5`}>
+                <Icon size={22} className="text-white" />
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+              <p className={`text-xs font-bold uppercase tracking-widest mb-1 ${dark ? "text-gray-400" : "text-gray-400"}`}>{label}</p>
+              <h3 className={`text-xl font-black mb-2 ${dark ? "text-white" : "text-gray-900"}`}>{title}</h3>
+              <p className={`text-sm mb-5 leading-relaxed ${dark ? "text-gray-400" : "text-gray-500"}`}>{desc}</p>
+              <ul className="space-y-2.5 mb-7 flex-1">
+                {points.map((pt) => (
+                  <li key={pt} className={`flex items-start gap-2 text-sm ${dark ? "text-gray-300" : "text-gray-600"}`}>
+                    <CheckCircle2 size={15} className={`mt-0.5 shrink-0 ${dark ? "text-green-400" : "text-green-500"}`} />
+                    {pt}
+                  </li>
+                ))}
+              </ul>
+              <a
+                href={cta.href}
+                target={external ? "_blank" : undefined}
+                rel={external ? "noopener noreferrer" : undefined}
+                className={`flex items-center justify-center gap-2 w-full py-3 font-semibold text-sm rounded-2xl transition ${cta.style}`}
+              >
+                {external ? <MessageCircleMore size={16} /> : <ArrowRight size={16} />}
+                {cta.label}
+              </a>
+            </div>
+          ))}
+        </div>
+
+      </div>
     </section>
   );
 }

@@ -1,172 +1,184 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
-import {
-  IoMdStar,
-  IoMdStarHalf,
-  IoMdStarOutline,
-} from "react-icons/io";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Flame, ShoppingCart, Star, ChevronRight } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import toast from "react-hot-toast";
 
-/* ================= Skeleton ================= */
-function BestSellingSkeleton() {
+function Skeleton() {
   return (
-    <section className="px-6 md:px-12 py-20 max-w-7xl mx-auto">
-      <div className="h-6 w-48 bg-gray-200 rounded mx-auto mb-12 animate-pulse" />
-
-      <div className="grid md:grid-cols-4 grid-cols-2 gap-6">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div
-            key={i}
-            className="rounded-2xl overflow-hidden border border-gray-100 bg-white animate-pulse"
-          >
-            <div className="w-full aspect-square bg-gray-200" />
-            <div className="p-4 space-y-3">
-              <div className="h-3 w-3/4 bg-gray-200 rounded" />
-              <div className="h-3 w-1/3 bg-gray-200 rounded" />
+    <section className="py-10 md:py-14 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="h-7 w-44 bg-gray-200 rounded-lg animate-pulse" />
+          <div className="h-7 w-20 bg-gray-200 rounded-lg animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-2xl overflow-hidden bg-gray-100 animate-pulse">
+              <div className="aspect-square bg-gray-200" />
+              <div className="p-3 space-y-2">
+                <div className="h-3 bg-gray-200 rounded w-3/4" />
+                <div className="h-3 bg-gray-200 rounded w-1/2" />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
-/* ================= Main ================= */
-export default function BestSelling() {
+function ProductCard({ product }) {
   const router = useRouter();
+  const { addToCart } = useCart();
+  const [adding, setAdding] = useState(false);
+
+  const rating =
+    product.avgRating !== undefined
+      ? product.avgRating
+      : product.reviews?.length
+      ? product.reviews.reduce((a, r) => a + (r.rating || 0), 0) / product.reviews.length
+      : 0;
+
+  const discount =
+    product.price && product.discountPrice && product.price > product.discountPrice
+      ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
+      : 0;
+
+  const handleAddToCart = async (e) => {
+    e.stopPropagation();
+    try {
+      setAdding(true);
+      await addToCart(product._id, 1);
+      toast.success("Added to cart");
+    } catch {
+      toast.error("Failed to add to cart");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return (
+    <div
+      onClick={() => router.push(`/collections/${product._id}`)}
+      className="group cursor-pointer bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+    >
+      {/* Image */}
+      <div className="relative aspect-square bg-gray-50 overflow-hidden">
+        <Image
+          src={product.thumbnail || "/fallback.png"}
+          alt={product.title}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
+          sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 20vw"
+        />
+
+        {/* Discount badge */}
+        {discount > 0 && (
+          <span className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+            -{discount}%
+          </span>
+        )}
+
+        {/* Rating badge */}
+        {rating > 0 && (
+          <span className="absolute top-2 right-2 flex items-center gap-0.5 bg-white/95 text-gray-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow-sm">
+            <Star size={9} className="fill-yellow-400 text-yellow-400" />
+            {rating.toFixed(1)}
+          </span>
+        )}
+
+        {/* Quick add overlay */}
+        <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+          <button
+            onClick={handleAddToCart}
+            disabled={adding}
+            className="w-full py-2.5 bg-black/90 text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-black transition"
+          >
+            {adding ? (
+              <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <ShoppingCart size={13} />
+            )}
+            Add to Cart
+          </button>
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-3">
+        <p className="text-xs text-gray-400 mb-0.5 truncate">{product.category}</p>
+        <h3 className="text-sm font-medium text-gray-800 line-clamp-2 leading-snug mb-1.5">
+          {product.title}
+        </h3>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-gray-900">৳{product.discountPrice || product.price}</span>
+          {discount > 0 && (
+            <span className="text-xs text-gray-400 line-through">৳{product.price}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function BestSelling() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const calculateAvg = (reviews = []) => {
-    if (!reviews.length) return 0;
-    return (
-      reviews.reduce((acc, r) => acc + (r.rating || 0), 0) /
-      reviews.length
-    );
-  };
-
-  const renderStars = (rating = 0) => {
-    return Array.from({ length: 5 }).map((_, i) => {
-      if (i < Math.floor(rating))
-        return <IoMdStar key={i} />;
-      if (i + 0.5 < rating)
-        return <IoMdStarHalf key={i} />;
-      return <IoMdStarOutline key={i} />;
-    });
-  };
-
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch("/api/products/best-selling");
-        const data = await res.json();
-        setProducts(data.products || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
+    fetch("/api/products/best-selling")
+      .then((r) => r.json())
+      .then((d) => setProducts(d.products || []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <BestSellingSkeleton />;
+  if (loading) return <Skeleton />;
+  if (!products.length) return null;
 
   return (
-    <section className="px-6 md:px-12 max-w-7xl mx-auto">
-      {/* HEADER */}
-      <div className="text-center mb-8 md:mb-12">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-rose-500 via-pink-500 to-purple-500 text-transparent bg-clip-text">
-          Best Selling Products
-        </h2>
-        <p className="text-sm text-gray-500 mt-2">
-          Top picks loved by customers
-        </p>
-      </div>
+    <section className="py-10 md:py-14 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-orange-500 rounded-xl flex items-center justify-center">
+              <Flame size={16} className="text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg sm:text-xl font-black text-gray-900">Best Sellers</h2>
+              <p className="text-xs text-gray-400 hidden sm:block">Top picks loved by customers</p>
+            </div>
+          </div>
+          <Link
+            href="/collections"
+            className="flex items-center gap-1 text-xs sm:text-sm font-semibold text-gray-600 hover:text-black transition border border-gray-200 hover:border-gray-400 px-3 py-1.5 rounded-full"
+          >
+            View All <ChevronRight size={13} />
+          </Link>
+        </div>
 
-      {/* GRID */}
-      <div className="grid md:grid-cols-4 grid-cols-2 gap-6">
-        {products.map((p, i) => {
-          const rating =
-            p.avgRating !== undefined
-              ? p.avgRating
-              : calculateAvg(p.reviews);
+        {/* Grid — horizontal scroll on mobile */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {products.slice(0, 4).map((p) => (
+            <ProductCard key={p._id} product={p} />
+          ))}
+        </div>
 
-          return (
-            <motion.div
-              key={p._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                delay: i * 0.05,
-                duration: 0.4,
-              }}
-              whileHover={{
-                y: -8,
-                scale: 1.02,
-              }}
-              onClick={() =>
-                router.push(`/collections/${p._id}`)
-              }
-              className="
-                group
-                cursor-pointer
-                rounded-2xl
-                overflow-hidden
-                bg-white
-                border border-gray-100
-                shadow-sm
-                hover:shadow-2xl
-                transition-all duration-300
-              "
-            >
-              {/* IMAGE */}
-              <div className="relative aspect-square overflow-hidden bg-gray-50">
-                <Image
-                  src={p.thumbnail || "/fallback.png"}
-                  alt={p.title}
-                  fill
-                  className="
-                    object-cover
-                    group-hover:scale-110
-                    transition-transform duration-500
-                  "
-                />
-
-                {/* gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-
-                {/* rating badge */}
-                <div className="absolute top-2 right-2 flex items-center gap-1 text-[11px] bg-white/90 backdrop-blur-md px-2 py-1 rounded-full shadow">
-                  <span className="text-yellow-500 flex gap-[2px]">
-                    {renderStars(rating)}
-                  </span>
-                  <span className="text-[10px] text-gray-600 ml-1">
-                    {rating.toFixed(1)}
-                  </span>
-                </div>
-              </div>
-
-              {/* INFO */}
-              <div className="p-4 relative">
-                <h3 className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-black transition">
-                  {p.title}
-                </h3>
-
-                <p className="text-sm font-semibold text-gray-600 mt-1">
-                  ৳{p.discountPrice}
-                </p>
-
-                {/* animated underline */}
-                <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-pink-500 to-purple-500 group-hover:w-full transition-all duration-300" />
-              </div>
-            </motion.div>
-          );
-        })}
+        {/* Bottom CTA */}
+        <div className="mt-8 text-center">
+          <Link
+            href="/collections"
+            className="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-3 rounded-full text-sm font-semibold hover:bg-gray-700 transition"
+          >
+            See All Products <ChevronRight size={14} />
+          </Link>
+        </div>
       </div>
     </section>
   );

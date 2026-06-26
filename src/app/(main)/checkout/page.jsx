@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 
@@ -14,7 +14,7 @@ export default function CheckoutPage() {
 
   const { user } = useAuth();
 
-  const { cart, loading: cartLoading } = useCart();
+  const { cart, removeItems, loading: cartLoading } = useCart();
 
   const [products, setProducts] = useState([]);
 
@@ -124,11 +124,14 @@ export default function CheckoutPage() {
       try {
         const res = await fetch("https://bdapi.vercel.app/api/v.1/division");
 
+        if (!res.ok) throw new Error("BD API error");
+
         const data = await res.json();
 
         setDivisions(data.data || []);
       } catch (err) {
         console.error(err);
+        toast.error("Failed to load divisions. Please refresh and try again.");
       }
     };
 
@@ -347,17 +350,13 @@ export default function CheckoutPage() {
         return;
       }
 
-      toast.success("Order placed successfully, plz check email 🎉");
+      toast.success("Order placed! Check your email for the invoice 🎉");
 
-      const remainingCart = cart.filter((item) => {
-        const id = typeof item === "string" ? item : item.id;
+      await removeItems(selectedIds);
 
-        return !selectedIds.includes(id);
-      });
-
-      setTimeout(() => {
-        router.push("/");
-      }, 1500);
+      router.push(
+        `/order-confirmation?orderId=${data.orderId}&total=${total}&name=${encodeURIComponent(form.name)}`,
+      );
     } catch (err) {
       console.error(err);
 
@@ -371,10 +370,12 @@ export default function CheckoutPage() {
      VALIDATION
   ====================================================== */
 
+  const isBDPhone = /^(?:\+?88)?01[3-9]\d{8}$/.test(form.phone.trim());
+
   const isValid =
     form.name.trim() &&
     form.email.trim() &&
-    form.phone.trim() &&
+    isBDPhone &&
     form.divisionId &&
     form.districtId &&
     form.upazilaId &&
@@ -410,8 +411,6 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <Toaster position="top-right" />
-
       <section className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8  py-20 grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-10">
         {/* LEFT */}
         <div className="bg-white border border-gray-200 rounded-2xl lg:rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm order-2 lg:order-1">
@@ -447,7 +446,7 @@ export default function CheckoutPage() {
           <div className="mb-4 sm:mb-5">
             <input
               type="tel"
-              placeholder="Phone Number"
+              placeholder="Phone Number (e.g. 01XXXXXXXXX)"
               value={form.phone}
               onChange={(e) =>
                 setForm({
@@ -455,8 +454,17 @@ export default function CheckoutPage() {
                   phone: e.target.value,
                 })
               }
-              className="w-full border border-gray-300 bg-white text-black rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:ring-2 focus:ring-black text-sm sm:text-base"
+              className={`w-full border bg-white text-black rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:ring-2 focus:ring-black text-sm sm:text-base ${
+                form.phone && !isBDPhone
+                  ? "border-red-400 focus:ring-red-400"
+                  : "border-gray-300"
+              }`}
             />
+            {form.phone && !isBDPhone && (
+              <p className="text-xs text-red-500 mt-1 pl-1">
+                Enter a valid Bangladeshi phone number (e.g. 01XXXXXXXXX)
+              </p>
+            )}
           </div>
 
           {/* ADDRESS */}
@@ -684,7 +692,9 @@ export default function CheckoutPage() {
             <div className="flex justify-between text-gray-600 text-sm sm:text-base">
               <span>Shipping</span>
 
-              <span>৳{shipping}</span>
+              <span>
+                {form.districtId ? `৳${shipping}` : "Select address"}
+              </span>
             </div>
 
             {discount > 0 && (

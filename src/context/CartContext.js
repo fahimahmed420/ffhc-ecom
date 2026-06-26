@@ -133,6 +133,7 @@ export const CartProvider = ({
 
   const addToCart = async (
     productId,
+    qty = 1,
   ) => {
     if (!user?.uid) {
       toast.error(
@@ -162,7 +163,7 @@ export const CartProvider = ({
         ...prev,
         {
           id: productId,
-          qty: 1,
+          qty: Math.max(1, qty),
         },
       ];
 
@@ -289,6 +290,34 @@ export const CartProvider = ({
   };
 
   /* ======================================================
+     REMOVE MULTIPLE ITEMS
+  ====================================================== */
+
+  const removeItems = async (ids) => {
+    if (!user?.uid) return;
+
+    setCart((prev) => {
+      const updated = prev.filter(
+        (item) => {
+          const id =
+            typeof item === "string"
+              ? item
+              : item.id;
+          return !ids.includes(id);
+        },
+      );
+
+      syncCart(updated);
+
+      return updated;
+    });
+
+    setSelectedItems((prev) =>
+      prev.filter((id) => !ids.includes(id)),
+    );
+  };
+
+  /* ======================================================
      CLEAR CART
   ====================================================== */
 
@@ -376,6 +405,7 @@ export const CartProvider = ({
 
     addToCart,
     removeItem,
+    removeItems,
     updateQty,
     clearCart,
 

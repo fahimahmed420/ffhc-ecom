@@ -1,5 +1,23 @@
 // app/layout.js
 
+export const metadata = {
+  title: {
+    default: "Family Fashion Hub China — Import from China, Sell Across Bangladesh",
+    template: "%s | Family Fashion Hub China",
+  },
+  description:
+    "Import the best quality products from China and scale your online & offline business with confidence, speed, and reliability across Bangladesh.",
+  keywords: ["import from china", "wholesale bangladesh", "online shop bangladesh", "fashion hub"],
+  openGraph: {
+    title: "Family Fashion Hub China",
+    description:
+      "Source top-quality products from China and sell across Bangladesh with fast nationwide delivery.",
+    type: "website",
+    locale: "en_US",
+    siteName: "Family Fashion Hub China",
+  },
+};
+
 import { Geist, Geist_Mono } from "next/font/google";
 import { CartProvider } from "@/context/CartContext";
 import "./globals.css";

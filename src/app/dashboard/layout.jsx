@@ -5,240 +5,206 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   Package,
+  PackagePlus,
   ClipboardList,
+  TicketPercent,
   User,
   LogOut,
-  Menu,
+  ChevronRight,
+  LayoutDashboard,
   X,
+  Menu,
+  ShoppingBag,
+  Settings,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/firebase.config";
-
-// ✅ import auth context
 import { useAuth } from "@/context/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
+
+const ADMIN_NAV = [
+  { label: "Overview", path: "/dashboard", icon: LayoutDashboard },
+  { label: "Add Product", path: "/dashboard/add-product", icon: PackagePlus },
+  { label: "Products", path: "/dashboard/manage-product", icon: Package },
+  { label: "Orders", path: "/dashboard/manage-orders", icon: ClipboardList },
+  { label: "Coupons", path: "/dashboard/add-coupon", icon: TicketPercent },
+  { label: "Profile", path: "/dashboard/profile", icon: User },
+];
+
+const USER_NAV = [
+  { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { label: "My Orders", path: "/dashboard/orders", icon: ShoppingBag },
+  { label: "Profile", path: "/dashboard/profile", icon: User },
+];
+
+function NavItem({ item, pathname, onClick }) {
+  const active = pathname === item.path;
+  const Icon = item.icon;
+
+  return (
+    <Link
+      href={item.path}
+      onClick={onClick}
+      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all group ${
+        active
+          ? "bg-black text-white"
+          : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+      }`}
+    >
+      <Icon size={17} className="shrink-0" />
+      <span className="flex-1">{item.label}</span>
+      {active && <ChevronRight size={14} className="opacity-60" />}
+    </Link>
+  );
+}
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
-
-  const [open, setOpen] = useState(false);
-  const [mobileMenu, setMobileMenu] = useState(false);
-
-  // ✅ use global auth
   const { user, role } = useAuth();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // ✅ Protect dashboard
   useEffect(() => {
-    if (user === null) {
-      router.push("/auth");
-    }
+    if (user === null) router.push("/auth");
   }, [user, router]);
 
-  // 🔓 Logout
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
+
   const handleLogout = async () => {
     await signOut(auth);
-    setOpen(false);
     router.push("/auth");
   };
 
-  //  Navigation items with role
-  const navItems = [
-    { name: "HOME", path: "/", icon: <Home size={14} /> },
+  const navItems = role === "admin" ? ADMIN_NAV : USER_NAV;
 
-    ...(role === "admin"
-      ? [
-          {
-            name: "ADD PRODUCT",
-            path: "/dashboard/add-product",
-            icon: <Package size={14} />,
-          },
-          {
-            name: "MANAGE PRODUCT",
-            path: "/dashboard/manage-product",
-            icon: <Package size={14} />,
-          },
-          {
-            name: "ADD COUPON",
-            path: "/dashboard/add-coupon",
-            icon: <ClipboardList size={14} />,
-          },
-          {
-            name: "MANAGE ORDERS",
-            path: "/dashboard/manage-orders",
-            icon: <ClipboardList size={14} />,
-          },
-        ]
-      : [
-          {
-            name: "ORDERS",
-            path: "/dashboard/orders",
-            icon: <ClipboardList size={14} />,
-          },
-        ]),
-  ];
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      {/* Navbar */}
-      <nav className="border-b border-gray-300 px-6 md:px-12 py-4 flex justify-between items-center relative">
-        {/* Logo */}
-        <Link href="/">
-          <h1 className="tracking-[0.2em] cursor-pointer">FFHC</h1>
+  const SidebarContent = ({ onClose }) => (
+    <div className="flex flex-col h-full">
+      {/* Logo */}
+      <div className="px-6 py-5 flex items-center justify-between border-b border-gray-100">
+        <Link href="/" className="text-sm font-bold tracking-[0.25em] text-black">
+          FFHC
         </Link>
+        {onClose && (
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100">
+            <X size={18} />
+          </button>
+        )}
+      </div>
 
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-8 text-[11px] tracking-widest">
-          {navItems.map((item) => {
-            const isActive = pathname === item.path;
-
-            return (
-              <Link
-                key={item.name}
-                href={item.path}
-                className={`relative group flex items-center gap-2 ${
-                  isActive ? "text-black" : "text-gray-500"
-                }`}
-              >
-                {item.icon}
-                {item.name}
-
-                <span
-                  className={`absolute left-0 -bottom-1 h-[1px] bg-black transition-all ${
-                    isActive ? "w-full" : "w-0 group-hover:w-full"
-                  }`}
-                />
-              </Link>
-            );
-          })}
-
-          {/* Auth Section */}
-          <div className="relative">
-            {user ? (
-              <>
-                <button
-                  onClick={() => setOpen(!open)}
-                  className="flex items-center gap-2 hover:text-black cursor-pointer"
-                >
-                  <User size={14} />
-                  ACCOUNT
-                </button>
-
-                {open && (
-                  <div className="absolute z-50 right-0 mt-3 w-40 bg-white border border-gray-200 shadow-sm text-[11px] tracking-widest">
-                    {/* 🔥 Role label */}
-                    <p className="px-4 py-2 text-gray-400 text-[10px]">
-                      {role?.toUpperCase()}
-                    </p>
-
-                    <Link
-                      href="/dashboard/profile"
-                      className="flex items-center gap-2 px-4 py-3 hover:bg-gray-100"
-                      onClick={() => setOpen(false)}
-                    >
-                      <User size={14} />
-                      PROFILE
-                    </Link>
-
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-100 text-left"
-                    >
-                      <LogOut size={14} />
-                      LOGOUT
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <button
-                onClick={() => router.push("/auth")}
-                className="flex items-center gap-2 hover:text-black"
-              >
-                <User size={14} />
-                LOGIN
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center gap-4">
-          <Menu
-            size={18}
-            className="cursor-pointer"
-            onClick={() => setMobileMenu(true)}
+      {/* Role badge */}
+      <div className="px-6 py-4">
+        <span
+          className={`inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full ${
+            role === "admin"
+              ? "bg-amber-100 text-amber-700"
+              : "bg-blue-50 text-blue-600"
+          }`}
+        >
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${
+              role === "admin" ? "bg-amber-500" : "bg-blue-500"
+            }`}
           />
+          {role === "admin" ? "Admin" : "Customer"}
+        </span>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
+        {navItems.map((item) => (
+          <NavItem key={item.path} item={item} pathname={pathname} onClick={onClose} />
+        ))}
+
+        <div className="pt-2 mt-2 border-t border-gray-100">
+          <Link
+            href="/"
+            onClick={onClose}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition"
+          >
+            <Home size={17} />
+            Back to Site
+          </Link>
         </div>
       </nav>
 
-      {/* Mobile Menu */}
-      {mobileMenu && (
-        <div className="fixed inset-0 bg-white z-50 p-6 flex flex-col">
-          {/* Top */}
-          <div className="flex justify-between items-center mb-10">
-            <h1 className="tracking-[0.2em]">FFHC</h1>
-            <X
-              size={20}
-              className="cursor-pointer"
-              onClick={() => setMobileMenu(false)}
-            />
+      {/* User footer */}
+      {user && (
+        <div className="border-t border-gray-100 p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {(user.displayName || user.email || "U")[0].toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-gray-900 truncate">
+                {user.displayName || "Account"}
+              </p>
+              <p className="text-[10px] text-gray-400 truncate">{user.email}</p>
+            </div>
           </div>
-
-          {/* Links */}
-          <div className="flex flex-col gap-6 text-[12px] tracking-widest ">
-            {navItems.map((item) => {
-              const isActive = pathname === item.path;
-
-              return (
-                <Link
-                  key={item.name}
-                  href={item.path}
-                  onClick={() => setMobileMenu(false)}
-                  className={`${
-                    isActive ? "text-black" : "text-gray-500 hover:text-gray-900"
-                  } flex items-center gap-2`}
-                >
-                  {item.icon}
-                  {item.name}
-                </Link>
-              );
-            })}
-
-            {user ? (
-              <>
-                <Link
-                  href="/dashboard/profile"
-                  onClick={() => setMobileMenu(false)}
-                  className="flex items-center gap-2 text-gray-500 hover:text-gray-900"
-                >
-                  <User size={14} />
-                  PROFILE
-                </Link>
-
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 text-left text-gray-500 hover:text-gray-900"
-                >
-                  <LogOut size={14} />
-                  LOGOUT
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => router.push("/auth")}
-                className="flex items-center gap-2 text-gray-500 "
-              >
-                <User size={14} />
-                LOGIN
-              </button>
-            )}
-          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-500 hover:bg-red-50 transition"
+          >
+            <LogOut size={15} />
+            Sign Out
+          </button>
         </div>
       )}
+    </div>
+  );
 
-      {/* Content */}
-      <main className="flex-1 p-6 md:p-10 bg-white">{children}</main>
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* DESKTOP SIDEBAR */}
+      <aside className="hidden md:flex flex-col w-60 shrink-0 bg-white border-r border-gray-100 fixed top-0 left-0 h-screen z-30">
+        <SidebarContent />
+      </aside>
+
+      {/* MOBILE DRAWER */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-40 md:hidden"
+              onClick={() => setDrawerOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed top-0 left-0 h-screen w-72 bg-white z-50 flex flex-col md:hidden shadow-2xl"
+            >
+              <SidebarContent onClose={() => setDrawerOpen(false)} />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* MAIN */}
+      <div className="flex-1 md:ml-60 flex flex-col min-h-screen">
+        {/* Mobile topbar */}
+        <header className="md:hidden sticky top-0 z-20 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="p-2 rounded-lg hover:bg-gray-100"
+          >
+            <Menu size={20} />
+          </button>
+          <span className="text-sm font-bold tracking-widest">FFHC</span>
+          <Link href="/dashboard/profile" className="p-2 rounded-lg hover:bg-gray-100">
+            <User size={20} />
+          </Link>
+        </header>
+
+        <main className="flex-1 p-4 md:p-8">{children}</main>
+      </div>
     </div>
   );
 }
