@@ -19,7 +19,7 @@ import {
 // ─── Announcement bar messages ────────────────────────────────────────────────
 const ANNOUNCEMENTS = [
   "🔥 MEGA SALE — Up to 70% OFF on selected items",
-  "🚚 FREE Delivery inside Dhaka on orders above ৳500",
+  "🚚 FREE Delivery inside Dhaka on orders above ৳2500",
   "⚡ FLASH DEALS every day — Check Best Sellers now",
   "🎁 New arrivals from China added daily",
   "📦 Nationwide delivery across Bangladesh",
@@ -31,24 +31,24 @@ const SLIDES = [
   {
     badge: "MEGA SALE",
     badgeColor: "bg-red-500",
-    title: "Up to 70% OFF",
-    sub: "Glamour & Beauty",
+    title: "Glamour & Beauty",
+    sub: "Up to 40% OFF",
     desc: "Premium skincare, makeup & beauty products imported directly from China.",
     cta: "Shop Beauty",
     href: "/category/glamour-and-beauty",
-    image: "/slider/g&b.png",
-    accent: "from-rose-600/80 to-pink-900/60",
+    image: "/slider/beauty.png",
+    accent: "from-rose-700/30 to-pink-600/10",
   },
   {
     badge: "NEW ARRIVALS",
     badgeColor: "bg-blue-500",
-    title: "Fresh Styles",
-    sub: "Fashion Collection",
+    title: "Fashion Collection",
+    sub: "Fresh Styles",
     desc: "Trending outfits and modern styles for every season — direct from China.",
     cta: "Shop Fashion",
     href: "/category/fashion",
-    image: "/slider/woman.png",
-    accent: "from-indigo-800/80 to-purple-900/60",
+    image: "/slider/fashion.png",
+    accent: "from-indigo-700/60 to-purple-900/10",
   },
   {
     badge: "HOT DEAL",
@@ -58,8 +58,8 @@ const SLIDES = [
     desc: "Upgrade your living space with modern home products at unbeatable prices.",
     cta: "Shop Home",
     href: "/category/home-and-kitchen",
-    image: "/slider/house.png",
-    accent: "from-orange-700/80 to-amber-900/60",
+    image: "/slider/home & kitchen.png",
+    accent: "from-orange-700/70 to-amber-900/10",
   },
   {
     badge: "BEST SELLER",
@@ -69,8 +69,8 @@ const SLIDES = [
     desc: "Trusted baby products and maternity essentials — quality you can count on.",
     cta: "Shop Baby",
     href: "/category/mother-and-baby",
-    image: "/slider/m&b.png",
-    accent: "from-green-700/80 to-teal-900/60",
+    image: "/slider/mother & baby.png",
+    accent: "from-green-700/70 to-teal-900/10",
   },
   {
     badge: "SALE",
@@ -81,7 +81,7 @@ const SLIDES = [
     cta: "Browse Auto",
     href: "/category/auto-parts",
     image: "/slider/auto parts.png",
-    accent: "from-gray-800/80 to-slate-900/60",
+    accent: "from-gray-700/70 to-slate-900/10",
   },
 ];
 
@@ -93,36 +93,36 @@ const PROMO_TILES = [
     discount: "Up to 50% OFF",
     image: "/slider/tools.png",
     href: "/category/tools-and-hardware",
-    bg: "from-slate-800 to-slate-600",
+    bg: "from-slate-800/70 to-slate-600/30",
     icon: Zap,
   },
   {
     label: "Special Offer",
     title: "Travel & Accessories",
     discount: "Starting ৳299",
-    image: "/slider/travel.png",
+    image: "/slider/travel accessesories.png",
     href: "/category/travel-and-accessories",
-    bg: "from-blue-800 to-cyan-700",
+    bg: "from-blue-800/70 to-cyan-700/10",
     icon: Tag,
   },
 ];
 
 // ─── Category quick-links ─────────────────────────────────────────────────────
 const CATEGORIES = [
-  { name: "Beauty", image: "/categories/brush.png", href: "/category/glamour-and-beauty" },
+  { name: "Glamour & Beauty", image: "/categories/brush.png", href: "/category/glamour-and-beauty" },
   { name: "Fashion", image: "/categories/woman.png", href: "/category/fashion" },
   { name: "Auto Parts", image: "/categories/car.png", href: "/category/auto-parts" },
-  { name: "Tools", image: "/categories/tool-box.png", href: "/category/tools-and-hardware" },
-  { name: "Home", image: "/categories/house.png", href: "/category/home-and-kitchen" },
-  { name: "Baby", image: "/categories/mother.png", href: "/category/mother-and-baby" },
+  { name: "Tools & Hardware", image: "/categories/tool-box.png", href: "/category/tools-and-hardware" },
+  { name: "Home & Kitchen", image: "/categories/house.png", href: "/category/home-and-kitchen" },
+  { name: "Mother & Baby", image: "/categories/mother.png", href: "/category/mother-and-baby" },
   { name: "Travel", image: "/categories/luggage.png", href: "/category/travel-and-accessories" },
   { name: "Stationery", image: "/categories/stationery-pic.png", href: "/category/stationery" },
-  { name: "Personal Care", image: "/categories/underwear.png", href: "/category/intimate-and-personal-care" },
+  { name: "Intimate & Personal Care", image: "/categories/underwear.png", href: "/category/intimate-and-personal-care" },
 ];
 
 // ─── Trust badges ─────────────────────────────────────────────────────────────
 const TRUST = [
-  { icon: Truck, label: "Free Delivery", sub: "Inside Dhaka ৳500+" },
+  { icon: Truck, label: "Free Delivery", sub: "Inside Dhaka ৳2500+" },
   { icon: RotateCcw, label: "Easy Returns", sub: "7-day return policy" },
   { icon: ShieldCheck, label: "Secure Payment", sub: "100% safe checkout" },
   { icon: Headphones, label: "24/7 Support", sub: "WhatsApp & call" },
@@ -134,7 +134,7 @@ const TRUST = [
 function AnnouncementBar() {
   return (
     <div className="bg-gray-900 text-white text-xs py-2 overflow-hidden relative">
-      <div className="flex animate-[marquee_28s_linear_infinite] whitespace-nowrap">
+      <div className="flex animate-[marquee_10s_linear_infinite] whitespace-nowrap">
         {[...ANNOUNCEMENTS, ...ANNOUNCEMENTS].map((msg, i) => (
           <span key={i} className="mx-8 shrink-0 font-medium tracking-wide">
             {msg}
@@ -253,7 +253,7 @@ function PromoTile({ tile }) {
       <Image src={tile.image} alt={tile.title} fill className="object-cover group-hover:scale-105 transition duration-500" sizes="33vw" />
       <div className={`absolute inset-0 bg-gradient-to-t ${tile.bg} opacity-85`} />
       <div className="relative z-10 h-full flex flex-col justify-between p-4 text-white">
-        <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider w-fit">
+        <span className="inline-flex items-center gap-1 bg-red-600 backdrop-blur-sm rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider w-fit">
           <Icon size={9} />{tile.label}
         </span>
         <div>

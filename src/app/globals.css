@@ -6,6 +6,18 @@
   to   { transform: translateX(-50%); }
 }
 
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 20s linear infinite;
+}
+
+@media (max-width: 768px) {
+  .marquee-track {
+    animation-duration: 12s;
+  }
+}
+
 /* ── Hide scrollbar on category strip ── */
 .scrollbar-hide {
   -ms-overflow-style: none;
